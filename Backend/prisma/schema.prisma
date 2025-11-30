@@ -1,0 +1,152 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum RoleType {
+  regular
+  cashier
+  manager
+  superuser
+}
+
+enum TransactionType {
+  purchase
+  redemption
+  adjustment
+  event
+  transfer
+}
+
+enum PromotionType {
+  automatic
+  onetime
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  utorid          String    @unique
+  name            String
+  email           String    @unique
+  password        String
+  role            RoleType  @default(regular)
+  birthday        String?   // YYYY-MM-DD
+  points          Int       @default(0)
+  verified        Boolean   @default(false)
+  suspicious      Boolean   @default(false)
+  avatarUrl       String?
+  createdAt       DateTime  @default(now())
+  lastLogin       DateTime?
+  resetToken      String?   @unique
+  expiresAt       DateTime?
+
+  // Relations
+  transactionsOwned     Transaction[]       @relation("UserTransactions")
+  transactionsCreated   Transaction[]       @relation("CreatedByUser")
+  eventsOrganizing      EventOrganizer[]
+  eventsAttending       EventGuest[]
+  promotionsUsed        PromotionUsage[]
+}
+
+model Transaction {
+  id              Int                 @id @default(autoincrement())
+  type            TransactionType
+  userId          Int
+  amount          Int                 // Points (can be negative)
+  spent           Float?              // Dollar amount for purchases
+  redeemed        Int?                // Points redeemed
+  relatedId       Int?                // Context-dependent: transaction ID, user ID, event ID, etc.
+  suspicious      Boolean             @default(false)
+  remark          String              @default("")
+  createdById     Int
+  createdAt       DateTime            @default(now())
+
+  // Relations
+  user            User                @relation("UserTransactions", fields: [userId], references: [id])
+  createdBy       User                @relation("CreatedByUser", fields: [createdById], references: [id])
+  promotions      TransactionPromotion[]
+}
+
+model Event {
+  id              Int                 @id @default(autoincrement())
+  name            String
+  description     String
+  location        String
+  startTime       DateTime
+  endTime         DateTime
+  capacity        Int?                // null = unlimited
+  points          Int                 // Total points allocated
+  pointsRemain    Int                 // Points remaining to distribute
+  pointsAwarded   Int                 @default(0)
+  published       Boolean             @default(false)
+  createdAt       DateTime            @default(now())
+
+  // Relations
+  organizers      EventOrganizer[]
+  guests          EventGuest[]
+}
+
+model Promotion {
+  id              Int                 @id @default(autoincrement())
+  name            String
+  description     String
+  type            PromotionType
+  startTime       DateTime
+  endTime         DateTime
+  minSpending     Float?              // Minimum spending requirement
+  rate            Float?              // Extra earning rate (for automatic)
+  points          Int?                // Extra points (for one-time)
+  createdAt       DateTime            @default(now())
+
+  // Relations
+  transactions    TransactionPromotion[]
+  usages          PromotionUsage[]
+}
+
+// Junction Tables for Many-to-Many Relationships
+
+model TransactionPromotion {
+  transactionId   Int
+  promotionId     Int
+
+  transaction     Transaction         @relation(fields: [transactionId], references: [id])
+  promotion       Promotion           @relation(fields: [promotionId], references: [id])
+
+  @@id([transactionId, promotionId])
+}
+
+model EventOrganizer {
+  eventId         Int
+  userId          Int
+
+  event           Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user            User                @relation(fields: [userId], references: [id])
+
+  @@id([eventId, userId])
+}
+
+model EventGuest {
+  eventId         Int
+  userId          Int
+  confirmedAt     DateTime?           // When attendance was confirmed
+
+  event           Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user            User                @relation(fields: [userId], references: [id])
+
+  @@id([eventId, userId])
+}
+
+model PromotionUsage {
+  promotionId     Int
+  userId          Int
+  usedAt          DateTime            @default(now())
+
+  promotion       Promotion           @relation(fields: [promotionId], references: [id])
+  user            User                @relation(fields: [userId], references: [id])
+
+  @@id([promotionId, userId])
+}
