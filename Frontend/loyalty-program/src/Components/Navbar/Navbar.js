@@ -1,35 +1,43 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import "./Navbar.css";
 import { useAuth } from "../../Contexts/AuthContext";
 
-// Import menu definitions for each role
-import { MenuItemsUser, MenuItemsCashier, MenuItemsManager, MenuItemsSuper } from "./NavbarMenus";
+import {
+  MenuItemsUser,
+  MenuItemsCashier,
+  MenuItemsManager,
+  MenuItemsSuper,
+} from "./NavbarMenus";
 
 const Navbar = () => {
   const [clicked, setClicked] = useState(false);
   const { user, activeRole, setActiveRole, logout } = useAuth();
+  const location = useLocation();
 
   const handleClick = () => setClicked(!clicked);
 
-  // Select correct menu based on role
   let menu = MenuItemsUser;
   if (activeRole === "cashier") menu = MenuItemsCashier;
   else if (activeRole === "manager") menu = MenuItemsManager;
   else if (activeRole === "superuser") menu = MenuItemsSuper;
+  if (!user) menu = [];
 
   return (
     <nav className="NavbarItems">
-      <h1 className="navbar-logo">
-        LoyalApp<i className="fab fa-react"></i>
-      </h1>
+      <Link
+        to="/dashboard"
+        className="navbar-logo"
+        onClick={() => setClicked(false)}
+      >
+        <span style={{ fontWeight: "400" }}>Cache</span>
+        <span style={{ fontWeight: "800" }}>Back</span>
+      </Link>
 
-      {/* Mobile menu icon */}
       <div className="menu-icon" onClick={handleClick}>
         <i className={clicked ? "fas fa-times" : "fas fa-bars"}></i>
       </div>
 
-      {/* Main nav links */}
       <ul className={clicked ? "nav-menu active" : "nav-menu"}>
         {menu.map((item, index) => (
           <li key={index}>
@@ -43,8 +51,7 @@ const Navbar = () => {
           </li>
         ))}
 
-        {/* Only show role switcher if user has elevated roles */}
-        {user && (
+        {user && user.role !== "regular" && (
           <li>
             <select
               className="nav-links"
@@ -55,29 +62,34 @@ const Navbar = () => {
                 border: "none",
                 color: "white",
                 fontSize: "1rem",
-                cursor: "pointer"
+                cursor: "pointer",
+                fontFamily: "inherit",
               }}
             >
-              <option value="regular">Regular</option>
-              {user.role === "cashier" && <option value="cashier">Cashier</option>}
+              <option value="regular">Regular View</option>
+
+              {user.role === "cashier" && (
+                <option value="cashier">Cashier Console</option>
+              )}
+
               {user.role === "manager" && (
                 <>
-                  <option value="manager">Manager</option>
-                  <option value="organizer">Organizer</option>
+                  <option value="manager">Manager Dashboard</option>
+                  <option value="organizer">Organizer View</option>
                 </>
               )}
+
               {user.role === "superuser" && (
                 <>
                   <option value="superuser">Superuser</option>
-                  <option value="manager">Manager</option>
-                  <option value="cashier">Cashier</option>
+                  <option value="manager">Manager Dashboard</option>
+                  <option value="cashier">Cashier Console</option>
                 </>
               )}
             </select>
           </li>
         )}
 
-        {/* Profile and Log buttons */}
         {user && (
           <>
             <li>
@@ -100,7 +112,7 @@ const Navbar = () => {
                   background: "transparent",
                   border: "none",
                   color: "white",
-                  cursor: "pointer"
+                  cursor: "pointer",
                 }}
               >
                 Logout
@@ -109,8 +121,7 @@ const Navbar = () => {
           </>
         )}
 
-        {/* Show Log in if no user */}
-        {!user && (
+        {!user && location.pathname !== "/login" && (
           <li>
             <Link
               to="/login"

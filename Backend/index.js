@@ -47,7 +47,10 @@ if (!JWT_SECRET) {
 }
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3001',
+    credentials: true
+}));
 app.use(express.json());
 
 // JWT Authentication Middleware 

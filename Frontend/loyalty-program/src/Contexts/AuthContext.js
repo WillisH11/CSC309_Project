@@ -1,43 +1,41 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import api from "../services/api";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [activeRole, setActiveRole] = useState("regular");
+  const [loading, setLoading] = useState(true);
 
   // --Log in--
-  const login = async (username, password) => {
+  const login = async (utorid, password) => {
     try {
-      const res = await fetch("http://localhost:3001/login", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
+      // POST /auth/tokens
+      const data = await api.post("/auth/tokens", { utorid, password });
 
-      if (!res.ok) {
-        throw new Error("Invalid username or password");
-      }
+      // Store the JWT token
+      api.setToken(data.token);
 
-      const data = await res.json();
+      // Fetch user data with the new token
+      const userData = await api.get("/users/me");
 
-      setUser(data.user);
-      setActiveRole("regular");
+      // Set user data
+      setUser(userData);
+      setActiveRole(userData.role || "regular");
+
       return { success: true };
-
     } catch (err) {
       return { success: false, message: err.message };
     }
   };
 
   // --Log out--
-  const logout = async () => {
-    await fetch("http://localhost:3001/logout", {
-      method: "POST",
-      credentials: "include",
-    });
+  const logout = () => {
+    // Remove JWT token
+    api.removeToken();
 
+    // Clear user state
     setUser(null);
     setActiveRole("regular");
   };
@@ -46,14 +44,23 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const res = await fetch("http://localhost:3001/me", {
-          credentials: "include",
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
+        // Check if token exists
+        const token = api.getToken();
+        if (!token) {
+          setLoading(false);
+          return;
         }
-      } catch {}
+
+        // GET /users/me
+        const data = await api.get("/users/me");
+        setUser(data);
+        setActiveRole(data.role || "regular");
+      } catch (error) {
+        // Token invalid or expired, remove it
+        api.removeToken();
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadUser();
@@ -61,7 +68,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, activeRole, setActiveRole, login, logout }}
+      value={{ user, activeRole, setActiveRole, login, logout, loading }}
     >
       {children}
     </AuthContext.Provider>

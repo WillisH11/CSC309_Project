@@ -3,13 +3,15 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./Components/Navbar/Navbar";
 
 // Regular user pages
-import Dashboard from "./pages/User/Dashboard.js";
+import Dashboard from "./pages/Dashboard.js";
 import MyQR from "./pages/User/MyQR.js";
 import Transfer from "./pages/User/Transfer.js";
 import Redeem from "./pages/User/Redeem.js";
 import Promotions from "./pages/User/Promotions.js";
 import Events from "./pages/User/Events.js";
 import Transactions from "./pages/User/Transactions.js";
+import Wallet from "./pages/User/Wallet";
+import Rewards from "./pages/User/Rewards";
 
 // Auth pages
 import Login from "./pages/Auth/Login.js";
@@ -109,6 +111,24 @@ function App() {
           element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/wallet"
+          element={
+            <ProtectedRoute>
+              <Wallet />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/rewards"
+          element={
+            <ProtectedRoute>
+              <Rewards />
             </ProtectedRoute>
           }
         />

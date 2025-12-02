@@ -1,0 +1,50 @@
+.cashier-dashboard {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+.cashier-options {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+.cashier-card {
+    display: block;
+    width: 250px;
+    padding: 2rem;
+    background: white;
+    border: 3px solid transparent; 
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--color-text-main);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.cashier-card.purchase { border-color: var(--color-brand-blue); }
+.cashier-card.purchase i { color: var(--color-brand-blue); }
+
+.cashier-card.redeem { border-color: var(--color-brand-orange); }
+.cashier-card.redeem i { color: var(--color-brand-orange); }
+
+.cashier-card:hover {
+    transform: translateY(-5px);
+    background-color: #fffdf5;
+}
+.cashier-card i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.cashier-form-container {
+    max-width: 500px;
+    margin: 3rem auto;
+    background: white;
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    border-top: 5px solid var(--color-brand-red); 
+}

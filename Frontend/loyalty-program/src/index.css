@@ -1,13 +1,65 @@
+/* =========================================
+   1. GLOBAL VARIABLES (The Summer Palette)
+   ========================================= */
+:root {
+  /* Core Brand Colors */
+  --color-brand-red:    #FF5656; /* Navbar, Headers, Alerts */
+  --color-brand-orange: #FFA239; /* Primary Buttons, Highlights */
+  --color-brand-blue:   #8CE4FF; /* Balance Cards, Info */
+  --color-brand-yellow: #FEEE91; /* Accents, Icons, Badges */
+
+  /* Functional Colors */
+  --color-bg:           #F4F5F7; 
+  --color-text-main:    #333333; 
+  --color-text-muted:   #666666; 
+  --color-border:       #eeeeee; 
+  
+  /* Interactions */
+  --color-btn-hover:    #e58e2e; 
+}
+
+/* =========================================
+   2. GLOBAL RESET & TYPOGRAPHY
+   ========================================= */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  /* Font Stack */
+  font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  
+  /* Global Background */
+  background-color: var(--color-bg);
+  color: var(--color-text-main);
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* =========================================
+   3. GLOBAL UTILITY CLASSES
+   ========================================= */
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Standard Card Style */
+.card-base {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+h1, h2, h3, .navbar-logo, .btn {
+  font-family: 'Poppins', sans-serif; 
 }
