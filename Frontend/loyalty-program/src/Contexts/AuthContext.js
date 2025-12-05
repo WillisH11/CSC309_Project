@@ -8,19 +8,19 @@ export const AuthProvider = ({ children }) => {
   const [activeRole, setActiveRole] = useState("regular");
   const [loading, setLoading] = useState(true);
 
+  //keep token in state
+  const [token, setToken] = useState(api.getToken());
+
   // --Log in--
   const login = async (utorid, password) => {
     try {
-      // POST /auth/tokens
       const data = await api.post("/auth/tokens", { utorid, password });
 
-      // Store the JWT token
       api.setToken(data.token);
+      setToken(data.token);        //store token in state
 
-      // Fetch user data with the new token
       const userData = await api.get("/users/me");
 
-      // Set user data
       setUser(userData);
       setActiveRole(userData.role || "regular");
 
@@ -32,32 +32,31 @@ export const AuthProvider = ({ children }) => {
 
   // --Log out--
   const logout = () => {
-    // Remove JWT token
     api.removeToken();
+    setToken(null);                // ⬅️ clear token
 
-    // Clear user state
     setUser(null);
     setActiveRole("regular");
   };
 
-  // --Auto login on app load--
+  // --Auto login--
   useEffect(() => {
     const loadUser = async () => {
       try {
-        // Check if token exists
-        const token = api.getToken();
-        if (!token) {
+        const savedToken = api.getToken();
+        if (!savedToken) {
           setLoading(false);
           return;
         }
 
-        // GET /users/me
+        setToken(savedToken);       // ⬅️ restore token
+
         const data = await api.get("/users/me");
         setUser(data);
         setActiveRole(data.role || "regular");
       } catch (error) {
-        // Token invalid or expired, remove it
         api.removeToken();
+        setToken(null);
       } finally {
         setLoading(false);
       }
@@ -68,7 +67,15 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, activeRole, setActiveRole, login, logout, loading }}
+      value={{
+        user,
+        token,          // ⬅️ FIX: provide token to frontend
+        activeRole,
+        setActiveRole,
+        login,
+        logout,
+        loading
+      }}
     >
       {children}
     </AuthContext.Provider>

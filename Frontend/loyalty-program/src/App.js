@@ -12,6 +12,7 @@ import Events from "./pages/User/Events.js";
 import Transactions from "./pages/User/Transactions.js";
 import Wallet from "./pages/User/Wallet";
 import Rewards from "./pages/User/Rewards";
+import RedeemQR from "./pages/User/RedeemQR";
 
 // Auth pages
 import Login from "./pages/Auth/Login.js";
@@ -75,6 +76,15 @@ function App() {
           element={
             <ProtectedRoute>
               <Redeem />
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route
+          path="/redeem-qr/:requestId"
+          element={
+            <ProtectedRoute>
+              <RedeemQR />
             </ProtectedRoute>
           }
         />
