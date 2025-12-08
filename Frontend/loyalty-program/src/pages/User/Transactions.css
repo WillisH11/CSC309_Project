@@ -1,0 +1,39 @@
+.transactions-page {
+  padding: 20px;
+}
+
+.transactions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.transaction-card {
+  background: white;
+  padding: 16px;
+  border-radius: 10px;
+  border-left: 6px solid #ffa726;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.tx-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.tx-type {
+  font-weight: bold;
+}
+
+.tx-remark {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.tx-date {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: #777;
+  display: block;
+}

@@ -1,0 +1,18 @@
+.qr-container {
+  text-align: center;
+  padding: 2rem;
+}
+
+.qr-box {
+  margin: 20px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0px 4px 10px rgba(0,0,0,0.15);
+  width: fit-content;
+}
+
+.qr-uid {
+  margin-top: 10px;
+  color: #444;
+}
