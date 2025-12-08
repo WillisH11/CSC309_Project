@@ -180,7 +180,7 @@ export default function Events() {
       {/* Header */}
       <div className="events-header">
         <h1 className="page-title">Upcoming Events</h1>
-        <p style={{ textAlign: "center", color: "#666", marginBottom: "2rem" }}>
+        <p className="events-subtitle">
           Join events to earn points and connect with the community!
         </p>
       </div>
@@ -220,7 +220,7 @@ export default function Events() {
       {/* Loading State */}
       {loading && (
         <div className="loading-state">
-          <i className="fas fa-spinner fa-spin" style={{ fontSize: "2rem" }}></i>
+          <i className="fas fa-spinner fa-spin loading-icon"></i>
           <p>Loading events...</p>
         </div>
       )}
@@ -239,7 +239,7 @@ export default function Events() {
       {/* Empty State */}
       {!loading && !error && events.length === 0 && (
         <div className="empty-state">
-          <i className="fas fa-calendar-times" style={{ fontSize: "3rem" }}></i>
+          <i className="fas fa-calendar-times empty-icon"></i>
           <h3>No events found</h3>
           <p>
             {currentFilter === "myevents"
@@ -260,9 +260,8 @@ export default function Events() {
             {events.map((event) => (
               <div
                 key={event.id}
-                className="event-card"
+                className="event-card clickable"
                 onClick={() => navigate(`/events/${event.id}`)}
-                style={{ cursor: "pointer" }}
               >
                 {/* Status Badges */}
                 <div className="event-badges">

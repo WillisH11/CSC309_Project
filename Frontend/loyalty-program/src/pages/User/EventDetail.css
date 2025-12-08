@@ -356,6 +356,18 @@
   color: var(--color-brand-orange);
 }
 
+.btn-back-spaced {
+  margin-left: 1rem;
+}
+
+.loading-icon {
+  font-size: 2rem;
+}
+
+.empty-icon {
+  font-size: 3rem;
+}
+
 /* Badge - Attending */
 .badge-attending {
   background: #28a745;

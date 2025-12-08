@@ -70,11 +70,11 @@ export default function ManagerEvents() {
         // Fetch both published and unpublished
         const [publishedData, unpublishedData] = await Promise.all([
           api.get(`/events?limit=100&page=1&published=true`),
-          api.get(`/events?limit=100&page=1&published=false`)
+          api.get(`/events?limit=100&page=1&published=false`),
         ]);
         allEvents = [
           ...(publishedData.results || []),
-          ...(unpublishedData.results || [])
+          ...(unpublishedData.results || []),
         ];
       } else if (filter === "published") {
         // Fetch only published
@@ -103,7 +103,10 @@ export default function ManagerEvents() {
             const fullEvent = await fetchEventWithGuestDetails(event.id);
             return fullEvent;
           } catch (err) {
-            console.error(`Failed to fetch details for event ${event.id}:`, err);
+            console.error(
+              `Failed to fetch details for event ${event.id}:`,
+              err
+            );
             return event; // Return original if fetch fails
           }
         })
@@ -137,7 +140,7 @@ export default function ManagerEvents() {
     // The API returns guest objects that already contain user data (id, name, utorid, email)
     // We need to format them to have a nested 'user' property and 'userId' for consistency
     if (eventData.guests && eventData.guests.length > 0) {
-      eventData.guests = eventData.guests.map(guest => {
+      eventData.guests = eventData.guests.map((guest) => {
         // If guest already has a nested 'user' property, return as-is
         if (guest.user && guest.user.name) {
           return guest;
@@ -150,15 +153,15 @@ export default function ManagerEvents() {
             id: guest.id,
             name: guest.name,
             utorid: guest.utorid,
-            email: guest.email
-          }
+            email: guest.email,
+          },
         };
       });
     }
 
     // Transform organizers array to have consistent structure
     if (eventData.organizers && eventData.organizers.length > 0) {
-      eventData.organizers = eventData.organizers.map(organizer => {
+      eventData.organizers = eventData.organizers.map((organizer) => {
         // If organizer already has a nested 'user' property, return as-is
         if (organizer.user && organizer.user.name) {
           return organizer;
@@ -171,8 +174,8 @@ export default function ManagerEvents() {
             id: organizer.id,
             name: organizer.name,
             utorid: organizer.utorid,
-            email: organizer.email
-          }
+            email: organizer.email,
+          },
         };
       });
     }
@@ -251,7 +254,11 @@ export default function ManagerEvents() {
 
   // Handle Delete Event
   const handleDelete = async (eventId, eventName) => {
-    if (!window.confirm(`Are you sure you want to delete "${eventName}"? This action cannot be undone.`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete "${eventName}"? This action cannot be undone.`
+      )
+    ) {
       return;
     }
 
@@ -346,7 +353,7 @@ export default function ManagerEvents() {
 
       // Initialize guest points map with empty values
       const initialMap = {};
-      fullEventData.guests?.forEach(guest => {
+      fullEventData.guests?.forEach((guest) => {
         initialMap[guest.userId] = "";
       });
       setGuestPointsMap(initialMap);
@@ -367,7 +374,9 @@ export default function ManagerEvents() {
     }
 
     if (points > selectedEvent.pointsRemain) {
-      alert(`Only ${selectedEvent.pointsRemain} points remaining for this event`);
+      alert(
+        `Only ${selectedEvent.pointsRemain} points remaining for this event`
+      );
       return;
     }
 
@@ -375,7 +384,7 @@ export default function ManagerEvents() {
       setAwardingPoints(true);
 
       // Find the guest to get their utorid
-      const guest = selectedEvent.guests.find(g => g.userId === guestUserId);
+      const guest = selectedEvent.guests.find((g) => g.userId === guestUserId);
       if (!guest || !guest.user?.utorid) {
         alert("Guest information not found");
         return;
@@ -394,7 +403,7 @@ export default function ManagerEvents() {
       setSelectedEvent(updatedEvent);
 
       // Clear the input for this guest
-      setGuestPointsMap(prev => ({
+      setGuestPointsMap((prev) => ({
         ...prev,
         [guestUserId]: "",
       }));
@@ -418,11 +427,19 @@ export default function ManagerEvents() {
 
     const totalPointsNeeded = points * (selectedEvent.guests?.length || 0);
     if (totalPointsNeeded > selectedEvent.pointsRemain) {
-      alert(`Not enough points remaining. Need ${totalPointsNeeded}, but only ${selectedEvent.pointsRemain} available`);
+      alert(
+        `Not enough points remaining. Need ${totalPointsNeeded}, but only ${selectedEvent.pointsRemain} available`
+      );
       return;
     }
 
-    if (!window.confirm(`Award ${points} points to all ${selectedEvent.guests?.length || 0} attendees?`)) {
+    if (
+      !window.confirm(
+        `Award ${points} points to all ${
+          selectedEvent.guests?.length || 0
+        } attendees?`
+      )
+    ) {
       return;
     }
 
@@ -483,7 +500,8 @@ export default function ManagerEvents() {
           break;
         case "status":
           // Sort by published first, then by draft
-          compareResult = (b.published === a.published) ? 0 : b.published ? 1 : -1;
+          compareResult =
+            b.published === a.published ? 0 : b.published ? 1 : -1;
           break;
         case "date":
         default:
@@ -586,7 +604,11 @@ export default function ManagerEvents() {
                     >
                       Event Name
                       {sortBy === "name" && (
-                        <i className={`fas fa-sort-${sortOrder === "asc" ? "up" : "down"}`}></i>
+                        <i
+                          className={`fas fa-sort-${
+                            sortOrder === "asc" ? "up" : "down"
+                          }`}
+                        ></i>
                       )}
                       {sortBy !== "name" && <i className="fas fa-sort"></i>}
                     </button>
@@ -598,7 +620,11 @@ export default function ManagerEvents() {
                     >
                       Date & Time
                       {sortBy === "date" && (
-                        <i className={`fas fa-sort-${sortOrder === "asc" ? "up" : "down"}`}></i>
+                        <i
+                          className={`fas fa-sort-${
+                            sortOrder === "asc" ? "up" : "down"
+                          }`}
+                        ></i>
                       )}
                       {sortBy !== "date" && <i className="fas fa-sort"></i>}
                     </button>
@@ -613,7 +639,11 @@ export default function ManagerEvents() {
                     >
                       Status
                       {sortBy === "status" && (
-                        <i className={`fas fa-sort-${sortOrder === "asc" ? "up" : "down"}`}></i>
+                        <i
+                          className={`fas fa-sort-${
+                            sortOrder === "asc" ? "up" : "down"
+                          }`}
+                        ></i>
                       )}
                       {sortBy !== "status" && <i className="fas fa-sort"></i>}
                     </button>
@@ -631,7 +661,10 @@ export default function ManagerEvents() {
                   </tr>
                 ) : (
                   events.map((event) => (
-                    <tr key={event.id} className={isPastEvent(event) ? "past-event-row" : ""}>
+                    <tr
+                      key={event.id}
+                      className={isPastEvent(event) ? "past-event-row" : ""}
+                    >
                       <td>
                         <div className="event-name-cell">
                           <strong>{event.name}</strong>
@@ -646,7 +679,9 @@ export default function ManagerEvents() {
                       <td>
                         <div className="date-cell">
                           <div>{formatDate(event.startTime)}</div>
-                          <div className="date-end">to {formatDate(event.endTime)}</div>
+                          <div className="date-end">
+                            to {formatDate(event.endTime)}
+                          </div>
                         </div>
                       </td>
                       <td>{event.location}</td>
@@ -658,11 +693,13 @@ export default function ManagerEvents() {
                         >
                           {event.capacity ? (
                             <>
-                              <i className="fas fa-users"></i> {event.guests?.length || 0} / {event.capacity}
+                              <i className="fas fa-users"></i>{" "}
+                              {event.guests?.length || 0} / {event.capacity}
                             </>
                           ) : (
                             <>
-                              <i className="fas fa-users"></i> {event.guests?.length || 0} (Unlimited)
+                              <i className="fas fa-users"></i>{" "}
+                              {event.guests?.length || 0} (Unlimited)
                             </>
                           )}
                         </button>
@@ -670,14 +707,20 @@ export default function ManagerEvents() {
                       <td>
                         <div className="points-cell">
                           <div>{event.points} total</div>
-                          <div className="points-remain">{event.pointsRemain} remain</div>
+                          <div className="points-remain">
+                            {event.pointsRemain} remain
+                          </div>
                         </div>
                       </td>
                       <td>
                         {event.published ? (
-                          <span className="status-badge status-published">Published</span>
+                          <span className="status-badge status-published">
+                            Published
+                          </span>
                         ) : (
-                          <span className="status-badge status-draft">Draft</span>
+                          <span className="status-badge status-draft">
+                            Draft
+                          </span>
                         )}
                       </td>
                       <td>
@@ -707,7 +750,9 @@ export default function ManagerEvents() {
                             className="btn-icon btn-points"
                             onClick={() => handleManagePoints(event)}
                             title="Award Points"
-                            disabled={!event.guests || event.guests.length === 0}
+                            disabled={
+                              !event.guests || event.guests.length === 0
+                            }
                           >
                             <i className="fas fa-award"></i>
                           </button>
@@ -756,11 +801,17 @@ export default function ManagerEvents() {
 
       {/* Create Event Modal */}
       {showCreateModal && (
-        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
+        <div
+          className="modal-overlay"
+          onClick={() => setShowCreateModal(false)}
+        >
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Create New Event</h2>
-              <button className="modal-close" onClick={() => setShowCreateModal(false)}>
+              <button
+                className="modal-close"
+                onClick={() => setShowCreateModal(false)}
+              >
                 <i className="fas fa-times"></i>
               </button>
             </div>
@@ -771,7 +822,9 @@ export default function ManagerEvents() {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   required
                   maxLength={100}
                 />
@@ -781,7 +834,9 @@ export default function ManagerEvents() {
                 <label>Description *</label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
                   required
                   rows={4}
                   maxLength={500}
@@ -793,7 +848,9 @@ export default function ManagerEvents() {
                 <input
                   type="text"
                   value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, location: e.target.value })
+                  }
                   required
                   maxLength={100}
                 />
@@ -805,7 +862,9 @@ export default function ManagerEvents() {
                   <input
                     type="datetime-local"
                     value={formData.startTime}
-                    onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, startTime: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -815,7 +874,9 @@ export default function ManagerEvents() {
                   <input
                     type="datetime-local"
                     value={formData.endTime}
-                    onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, endTime: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -827,7 +888,9 @@ export default function ManagerEvents() {
                   <input
                     type="number"
                     value={formData.capacity}
-                    onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, capacity: e.target.value })
+                    }
                     min="1"
                     placeholder="Unlimited"
                   />
@@ -838,7 +901,9 @@ export default function ManagerEvents() {
                   <input
                     type="number"
                     value={formData.points}
-                    onChange={(e) => setFormData({ ...formData, points: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, points: e.target.value })
+                    }
                     required
                     min="0"
                   />
@@ -850,14 +915,20 @@ export default function ManagerEvents() {
                   <input
                     type="checkbox"
                     checked={formData.published}
-                    onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, published: e.target.checked })
+                    }
                   />
                   <span>Publish event (visible to all users)</span>
                 </label>
               </div>
 
               <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setShowCreateModal(false)}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setShowCreateModal(false)}
+                >
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary">
@@ -875,7 +946,10 @@ export default function ManagerEvents() {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Edit Event</h2>
-              <button className="modal-close" onClick={() => setShowEditModal(false)}>
+              <button
+                className="modal-close"
+                onClick={() => setShowEditModal(false)}
+              >
                 <i className="fas fa-times"></i>
               </button>
             </div>
@@ -886,7 +960,9 @@ export default function ManagerEvents() {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   required
                   maxLength={100}
                 />
@@ -896,7 +972,9 @@ export default function ManagerEvents() {
                 <label>Description *</label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
                   required
                   rows={4}
                   maxLength={500}
@@ -908,7 +986,9 @@ export default function ManagerEvents() {
                 <input
                   type="text"
                   value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, location: e.target.value })
+                  }
                   required
                   maxLength={100}
                 />
@@ -920,7 +1000,9 @@ export default function ManagerEvents() {
                   <input
                     type="datetime-local"
                     value={formData.startTime}
-                    onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, startTime: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -930,7 +1012,9 @@ export default function ManagerEvents() {
                   <input
                     type="datetime-local"
                     value={formData.endTime}
-                    onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, endTime: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -942,7 +1026,9 @@ export default function ManagerEvents() {
                   <input
                     type="number"
                     value={formData.capacity}
-                    onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, capacity: e.target.value })
+                    }
                     min="1"
                     placeholder="Unlimited"
                   />
@@ -953,7 +1039,9 @@ export default function ManagerEvents() {
                   <input
                     type="number"
                     value={formData.points}
-                    onChange={(e) => setFormData({ ...formData, points: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, points: e.target.value })
+                    }
                     required
                     min="0"
                   />
@@ -965,14 +1053,20 @@ export default function ManagerEvents() {
                   <input
                     type="checkbox"
                     checked={formData.published}
-                    onChange={(e) => setFormData({ ...formData, published: e.target.checked })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, published: e.target.checked })
+                    }
                   />
                   <span>Publish event (visible to all users)</span>
                 </label>
               </div>
 
               <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setShowEditModal(false)}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setShowEditModal(false)}
+                >
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary">
@@ -986,11 +1080,17 @@ export default function ManagerEvents() {
 
       {/* Manage Organizers Modal */}
       {showOrganizerModal && selectedEvent && (
-        <div className="modal-overlay" onClick={() => setShowOrganizerModal(false)}>
+        <div
+          className="modal-overlay"
+          onClick={() => setShowOrganizerModal(false)}
+        >
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Manage Organizers</h2>
-              <button className="modal-close" onClick={() => setShowOrganizerModal(false)}>
+              <button
+                className="modal-close"
+                onClick={() => setShowOrganizerModal(false)}
+              >
                 <i className="fas fa-times"></i>
               </button>
             </div>
@@ -1001,7 +1101,8 @@ export default function ManagerEvents() {
               {/* Current Organizers */}
               <div className="organizer-section">
                 <h4>Current Organizers</h4>
-                {selectedEvent.organizers && selectedEvent.organizers.length > 0 ? (
+                {selectedEvent.organizers &&
+                selectedEvent.organizers.length > 0 ? (
                   <div className="organizer-list">
                     {selectedEvent.organizers.map((org) => (
                       <div key={org.userId} className="organizer-item">
@@ -1048,7 +1149,10 @@ export default function ManagerEvents() {
             </div>
 
             <div className="modal-actions">
-              <button className="btn-secondary" onClick={() => setShowOrganizerModal(false)}>
+              <button
+                className="btn-secondary"
+                onClick={() => setShowOrganizerModal(false)}
+              >
                 Close
               </button>
             </div>
@@ -1058,11 +1162,17 @@ export default function ManagerEvents() {
 
       {/* View Attendees Modal */}
       {showAttendeesModal && selectedEvent && (
-        <div className="modal-overlay" onClick={() => setShowAttendeesModal(false)}>
+        <div
+          className="modal-overlay"
+          onClick={() => setShowAttendeesModal(false)}
+        >
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Event Attendees</h2>
-              <button className="modal-close" onClick={() => setShowAttendeesModal(false)}>
+              <button
+                className="modal-close"
+                onClick={() => setShowAttendeesModal(false)}
+              >
                 <i className="fas fa-times"></i>
               </button>
             </div>
@@ -1092,7 +1202,11 @@ export default function ManagerEvents() {
                     <strong>Fill Rate</strong>
                     <p>
                       {selectedEvent.capacity
-                        ? `${Math.round((selectedEvent.guests?.length || 0) / selectedEvent.capacity * 100)}%`
+                        ? `${Math.round(
+                            ((selectedEvent.guests?.length || 0) /
+                              selectedEvent.capacity) *
+                              100
+                          )}%`
                         : "N/A"}
                     </p>
                   </div>
@@ -1112,7 +1226,9 @@ export default function ManagerEvents() {
                         <div className="attendee-details">
                           <strong>{guest.user?.name || "Unknown"}</strong>
                           <small>{guest.user?.utorid}</small>
-                          <span className="attendee-email">{guest.user?.email}</span>
+                          <span className="attendee-email">
+                            {guest.user?.email}
+                          </span>
                         </div>
                         <button
                           className="btn-remove-attendee"
@@ -1125,7 +1241,9 @@ export default function ManagerEvents() {
                     ))}
                   </div>
                 ) : (
-                  <p className="empty-message">No attendees have registered yet.</p>
+                  <p className="empty-message">
+                    No attendees have registered yet.
+                  </p>
                 )}
               </div>
 
@@ -1137,7 +1255,9 @@ export default function ManagerEvents() {
                     setShowAttendeesModal(false);
                     handleManagePoints(selectedEvent);
                   }}
-                  disabled={!selectedEvent.guests || selectedEvent.guests.length === 0}
+                  disabled={
+                    !selectedEvent.guests || selectedEvent.guests.length === 0
+                  }
                 >
                   <i className="fas fa-award"></i> Award Points
                 </button>
@@ -1145,7 +1265,10 @@ export default function ManagerEvents() {
             </div>
 
             <div className="modal-actions">
-              <button className="btn-secondary" onClick={() => setShowAttendeesModal(false)}>
+              <button
+                className="btn-secondary"
+                onClick={() => setShowAttendeesModal(false)}
+              >
                 Close
               </button>
             </div>
@@ -1155,11 +1278,20 @@ export default function ManagerEvents() {
 
       {/* Award Points Modal */}
       {showPointsModal && selectedEvent && (
-        <div className="modal-overlay" onClick={() => setShowPointsModal(false)}>
-          <div className="modal-content points-modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-overlay"
+          onClick={() => setShowPointsModal(false)}
+        >
+          <div
+            className="modal-content points-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="modal-header">
               <h2>Award Points to Attendees</h2>
-              <button className="modal-close" onClick={() => setShowPointsModal(false)}>
+              <button
+                className="modal-close"
+                onClick={() => setShowPointsModal(false)}
+              >
                 <i className="fas fa-times"></i>
               </button>
             </div>
@@ -1180,7 +1312,13 @@ export default function ManagerEvents() {
                   <i className="fas fa-gift"></i>
                   <div>
                     <strong>Points Remaining</strong>
-                    <p className={selectedEvent.pointsRemain > 0 ? "text-success" : "text-danger"}>
+                    <p
+                      className={
+                        selectedEvent.pointsRemain > 0
+                          ? "text-success"
+                          : "text-danger"
+                      }
+                    >
                       {selectedEvent.pointsRemain}
                     </p>
                   </div>
@@ -1195,40 +1333,50 @@ export default function ManagerEvents() {
               </div>
 
               {/* Award Points to All */}
-              {selectedEvent.guests && selectedEvent.guests.length > 0 && selectedEvent.pointsRemain > 0 && (
-                <div className="award-all-section">
-                  <h4>Award Points to All Attendees</h4>
-                  <div className="award-all-form">
-                    <input
-                      type="number"
-                      value={pointsToAward}
-                      onChange={(e) => setPointsToAward(e.target.value)}
-                      placeholder="Points per person"
-                      min="1"
-                      max={Math.floor(selectedEvent.pointsRemain / selectedEvent.guests.length)}
-                      disabled={awardingPoints}
-                    />
-                    <button
-                      className="btn-primary"
-                      onClick={handleAwardPointsToAll}
-                      disabled={awardingPoints || !pointsToAward}
-                    >
-                      {awardingPoints ? (
-                        <>
-                          <i className="fas fa-spinner fa-spin"></i> Awarding...
-                        </>
-                      ) : (
-                        <>
-                          <i className="fas fa-gift"></i> Award to All
-                        </>
-                      )}
-                    </button>
+              {selectedEvent.guests &&
+                selectedEvent.guests.length > 0 &&
+                selectedEvent.pointsRemain > 0 && (
+                  <div className="award-all-section">
+                    <h4>Award Points to All Attendees</h4>
+                    <div className="award-all-form">
+                      <input
+                        type="number"
+                        value={pointsToAward}
+                        onChange={(e) => setPointsToAward(e.target.value)}
+                        placeholder="Points per person"
+                        min="1"
+                        max={Math.floor(
+                          selectedEvent.pointsRemain /
+                            selectedEvent.guests.length
+                        )}
+                        disabled={awardingPoints}
+                      />
+                      <button
+                        className="btn-primary"
+                        onClick={handleAwardPointsToAll}
+                        disabled={awardingPoints || !pointsToAward}
+                      >
+                        {awardingPoints ? (
+                          <>
+                            <i className="fas fa-spinner fa-spin"></i>{" "}
+                            Awarding...
+                          </>
+                        ) : (
+                          <>
+                            <i className="fas fa-gift"></i> Award to All
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <small className="help-text">
+                      Max{" "}
+                      {Math.floor(
+                        selectedEvent.pointsRemain / selectedEvent.guests.length
+                      )}{" "}
+                      points per person
+                    </small>
                   </div>
-                  <small className="help-text">
-                    Max {Math.floor(selectedEvent.pointsRemain / selectedEvent.guests.length)} points per person
-                  </small>
-                </div>
-              )}
+                )}
 
               {/* Individual Attendees */}
               <div className="attendees-section">
@@ -1249,7 +1397,7 @@ export default function ManagerEvents() {
                             type="number"
                             value={guestPointsMap[guest.userId] || ""}
                             onChange={(e) =>
-                              setGuestPointsMap(prev => ({
+                              setGuestPointsMap((prev) => ({
                                 ...prev,
                                 [guest.userId]: e.target.value,
                               }))
@@ -1276,7 +1424,9 @@ export default function ManagerEvents() {
                     ))}
                   </div>
                 ) : (
-                  <p className="empty-message">No attendees for this event yet.</p>
+                  <p className="empty-message">
+                    No attendees for this event yet.
+                  </p>
                 )}
               </div>
 
@@ -1289,7 +1439,10 @@ export default function ManagerEvents() {
             </div>
 
             <div className="modal-actions">
-              <button className="btn-secondary" onClick={() => setShowPointsModal(false)}>
+              <button
+                className="btn-secondary"
+                onClick={() => setShowPointsModal(false)}
+              >
                 Close
               </button>
             </div>

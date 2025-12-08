@@ -163,7 +163,7 @@ export default function EventDetail() {
     return (
       <div className="dashboard-container">
         <div className="loading-state">
-          <i className="fas fa-spinner fa-spin" style={{ fontSize: "2rem" }}></i>
+          <i className="fas fa-spinner fa-spin loading-icon"></i>
           <p>Loading event details...</p>
         </div>
       </div>
@@ -180,9 +180,8 @@ export default function EventDetail() {
             Try Again
           </button>
           <button
-            className="btn-back"
+            className="btn-back btn-back-spaced"
             onClick={() => navigate("/events")}
-            style={{ marginLeft: "1rem" }}
           >
             Back to Events
           </button>
@@ -195,7 +194,7 @@ export default function EventDetail() {
     return (
       <div className="dashboard-container">
         <div className="empty-state">
-          <i className="fas fa-calendar-times" style={{ fontSize: "3rem" }}></i>
+          <i className="fas fa-calendar-times empty-icon"></i>
           <h3>Event not found</h3>
           <button className="btn-back" onClick={() => navigate("/events")}>
             Back to Events

@@ -5,6 +5,12 @@
   margin-bottom: 2rem;
 }
 
+.events-subtitle {
+  text-align: center;
+  color: #666;
+  margin-bottom: 2rem;
+}
+
 /* Filter Tabs */
 .filter-tabs {
   display: flex;
@@ -54,6 +60,10 @@
   margin-bottom: 1rem;
 }
 
+.loading-icon {
+  font-size: 2rem;
+}
+
 /* Error State */
 .error-state {
   background: #fff5f5;
@@ -97,6 +107,10 @@
   margin-bottom: 1rem;
 }
 
+.empty-icon {
+  font-size: 3rem;
+}
+
 .empty-state h3 {
   color: #666;
   margin-bottom: 0.5rem;
@@ -119,6 +133,10 @@
   border-top: 5px solid var(--color-brand-blue);
   transition: all 0.3s ease;
   position: relative;
+}
+
+.event-card.clickable {
+  cursor: pointer;
 }
 
 .event-card:hover {
