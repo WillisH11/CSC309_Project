@@ -29,11 +29,36 @@ export default function EventDetail() {
       setError(null);
 
       const data = await api.get(`/events/${eventId}`);
+
+      // Transform guests array to have consistent structure
+      // The API returns guest objects that already contain user data (id, name, utorid, email)
+      // We need to format them to have a nested 'user' property and 'userId' for consistency
+      if (data.guests && data.guests.length > 0) {
+        data.guests = data.guests.map(guest => {
+          // If guest already has a nested 'user' property, return as-is
+          if (guest.user && guest.user.name) {
+            return guest;
+          }
+
+          // Otherwise, restructure: the guest object IS the user data
+          return {
+            userId: guest.id, // The guest's id is the userId
+            user: {
+              id: guest.id,
+              name: guest.name,
+              utorid: guest.utorid,
+              email: guest.email
+            }
+          };
+        });
+      }
+
       setEvent(data);
 
       // Check if current user is already attending
+      // Note: API returns guest.id (not guest.userId) - the guest ID IS the user ID
       const userIsAttending = data.guests?.some(
-        (guest) => guest.userId === user?.id
+        (guest) => guest.id === user?.id || guest.userId === user?.id
       );
       setIsAttending(userIsAttending);
     } catch (err) {

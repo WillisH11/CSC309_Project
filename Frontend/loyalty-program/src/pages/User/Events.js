@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "../../Contexts/AuthContext";
 import api from "../../services/api";
 import "./Events.css";
 import "./UserDashboard.css";
@@ -7,6 +8,7 @@ import "./UserDashboard.css";
 export default function Events() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
 
   // State
   const [events, setEvents] = useState([]);
@@ -29,33 +31,81 @@ export default function Events() {
       setLoading(true);
       setError(null);
 
-      // Build query params
-      const params = new URLSearchParams({
-        limit: "9", // 9 events per page (3x3 grid)
-        page: currentPage.toString(),
-      });
+      // For "My Events", fetch all events with guest details
+      if (currentFilter === "myevents") {
+        const data = await api.get(`/events?limit=100&page=1&published=true`);
+        let allEvents = data.results || [];
 
-      // Only add published=true for regular users
-      // Backend returns all events for managers
-      params.append("published", "true");
-
-      const data = await api.get(`/events?${params.toString()}`);
-
-      // Filter events client-side based on filter selection
-      let filteredEvents = data.results || [];
-
-      if (currentFilter === "upcoming") {
-        filteredEvents = filteredEvents.filter(
-          (event) => new Date(event.startTime) > new Date()
+        // Fetch full details for each event to get guest lists
+        const eventsWithGuests = await Promise.all(
+          allEvents.map(async (event) => {
+            try {
+              const fullEvent = await api.get(`/events/${event.id}`);
+              return fullEvent;
+            } catch (err) {
+              console.error(`Failed to fetch event ${event.id}:`, err);
+              return null;
+            }
+          })
         );
-      } else if (currentFilter === "past") {
-        filteredEvents = filteredEvents.filter(
-          (event) => new Date(event.endTime) < new Date()
+
+        // Filter to only events where current user is attending
+        const myEvents = eventsWithGuests.filter(
+          (event) =>
+            event &&
+            event.guests?.some((guest) => guest.id === user?.id)
         );
+
+        // Manually paginate
+        const startIdx = (currentPage - 1) * 4;
+        const endIdx = startIdx + 4;
+        const paginatedEvents = myEvents.slice(startIdx, endIdx);
+        const totalPagesCalc = Math.ceil(myEvents.length / 4);
+
+        setEvents(paginatedEvents);
+        setTotalPages(totalPagesCalc);
+      } else {
+        // Normal flow for other filters
+        // Fetch all published events
+        const data = await api.get(`/events?limit=100&page=1&published=true`);
+        let allEvents = data.results || [];
+
+        // Filter events client-side based on filter selection
+        let filteredEvents = allEvents;
+
+        if (currentFilter === "upcoming") {
+          filteredEvents = allEvents.filter(
+            (event) => new Date(event.startTime) > new Date()
+          );
+        } else if (currentFilter === "past") {
+          filteredEvents = allEvents.filter(
+            (event) => new Date(event.endTime) < new Date()
+          );
+        }
+
+        // Manually paginate the filtered results
+        const startIdx = (currentPage - 1) * 4;
+        const endIdx = startIdx + 4;
+        const paginatedEvents = filteredEvents.slice(startIdx, endIdx);
+        const totalPagesCalc = Math.ceil(filteredEvents.length / 4);
+
+        // Fetch full details for paginated events to get guest lists
+        // This allows us to show "Attending" badge on events
+        const eventsWithGuests = await Promise.all(
+          paginatedEvents.map(async (event) => {
+            try {
+              const fullEvent = await api.get(`/events/${event.id}`);
+              return fullEvent;
+            } catch (err) {
+              console.error(`Failed to fetch event ${event.id}:`, err);
+              return event; // Return original if fetch fails
+            }
+          })
+        );
+
+        setEvents(eventsWithGuests);
+        setTotalPages(totalPagesCalc);
       }
-
-      setEvents(filteredEvents);
-      setTotalPages(data.totalPages || 1);
     } catch (err) {
       setError(err.message || "Failed to load events");
       console.error("Error fetching events:", err);
@@ -119,6 +169,12 @@ export default function Events() {
     return remaining > 0 ? remaining : 0;
   };
 
+  // Check if current user is attending an event
+  const isUserAttending = (event) => {
+    if (!user || !event.guests) return false;
+    return event.guests.some((guest) => guest.id === user.id || guest.userId === user.id);
+  };
+
   return (
     <div className="dashboard-container">
       {/* Header */}
@@ -136,6 +192,14 @@ export default function Events() {
           onClick={() => handleFilterChange("all")}
         >
           <i className="fas fa-list"></i> All Events
+        </button>
+        <button
+          className={`filter-tab ${
+            currentFilter === "myevents" ? "active" : ""
+          }`}
+          onClick={() => handleFilterChange("myevents")}
+        >
+          <i className="fas fa-calendar-check"></i> My Events
         </button>
         <button
           className={`filter-tab ${
@@ -178,7 +242,9 @@ export default function Events() {
           <i className="fas fa-calendar-times" style={{ fontSize: "3rem" }}></i>
           <h3>No events found</h3>
           <p>
-            {currentFilter === "upcoming"
+            {currentFilter === "myevents"
+              ? "You haven't RSVPed to any events yet. Browse events and RSVP to get started!"
+              : currentFilter === "upcoming"
               ? "There are no upcoming events at the moment."
               : currentFilter === "past"
               ? "No past events to display."
@@ -200,6 +266,9 @@ export default function Events() {
               >
                 {/* Status Badges */}
                 <div className="event-badges">
+                  {isUserAttending(event) && (
+                    <span className="badge badge-attending">Attending</span>
+                  )}
                   {isPastEvent(event) && (
                     <span className="badge badge-past">Past</span>
                   )}

@@ -27,6 +27,8 @@ export default function ManagerEvents() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showOrganizerModal, setShowOrganizerModal] = useState(false);
+  const [showPointsModal, setShowPointsModal] = useState(false);
+  const [showAttendeesModal, setShowAttendeesModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
   // Form data for create/edit
@@ -44,6 +46,11 @@ export default function ManagerEvents() {
   // Organizer management
   const [availableUsers, setAvailableUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState("");
+
+  // Point allocation
+  const [pointsToAward, setPointsToAward] = useState("");
+  const [awardingPoints, setAwardingPoints] = useState(false);
+  const [guestPointsMap, setGuestPointsMap] = useState({}); // Track individual points for each guest
 
   // Fetch events
   useEffect(() => {
@@ -83,12 +90,26 @@ export default function ManagerEvents() {
       const sortedEvents = sortEvents(allEvents, sortBy, sortOrder);
 
       // Paginate manually
-      const startIdx = (currentPage - 1) * 10;
-      const endIdx = startIdx + 10;
+      const startIdx = (currentPage - 1) * 5;
+      const endIdx = startIdx + 5;
       const paginatedEvents = sortedEvents.slice(startIdx, endIdx);
-      const totalPagesCalc = Math.ceil(sortedEvents.length / 10);
+      const totalPagesCalc = Math.ceil(sortedEvents.length / 5);
 
-      setEvents(paginatedEvents);
+      // Fetch full details for paginated events to get guest counts
+      // This is a workaround since the list endpoint doesn't include guests
+      const eventsWithGuests = await Promise.all(
+        paginatedEvents.map(async (event) => {
+          try {
+            const fullEvent = await fetchEventWithGuestDetails(event.id);
+            return fullEvent;
+          } catch (err) {
+            console.error(`Failed to fetch details for event ${event.id}:`, err);
+            return event; // Return original if fetch fails
+          }
+        })
+      );
+
+      setEvents(eventsWithGuests);
       setTotalPages(totalPagesCalc);
     } catch (err) {
       setError(err.message || "Failed to load events");
@@ -106,6 +127,57 @@ export default function ManagerEvents() {
     } catch (err) {
       console.error("Error fetching users:", err);
     }
+  };
+
+  // Helper function to fetch event with populated guest user data
+  const fetchEventWithGuestDetails = async (eventId) => {
+    const eventData = await api.get(`/events/${eventId}`);
+
+    // Transform guests array to have consistent structure
+    // The API returns guest objects that already contain user data (id, name, utorid, email)
+    // We need to format them to have a nested 'user' property and 'userId' for consistency
+    if (eventData.guests && eventData.guests.length > 0) {
+      eventData.guests = eventData.guests.map(guest => {
+        // If guest already has a nested 'user' property, return as-is
+        if (guest.user && guest.user.name) {
+          return guest;
+        }
+
+        // Otherwise, restructure: the guest object IS the user data
+        return {
+          userId: guest.id, // The guest's id is the userId
+          user: {
+            id: guest.id,
+            name: guest.name,
+            utorid: guest.utorid,
+            email: guest.email
+          }
+        };
+      });
+    }
+
+    // Transform organizers array to have consistent structure
+    if (eventData.organizers && eventData.organizers.length > 0) {
+      eventData.organizers = eventData.organizers.map(organizer => {
+        // If organizer already has a nested 'user' property, return as-is
+        if (organizer.user && organizer.user.name) {
+          return organizer;
+        }
+
+        // Otherwise, restructure: the organizer object IS the user data
+        return {
+          userId: organizer.id, // The organizer's id is the userId
+          user: {
+            id: organizer.id,
+            name: organizer.name,
+            utorid: organizer.utorid,
+            email: organizer.email
+          }
+        };
+      });
+    }
+
+    return eventData;
   };
 
   // Handle Create Event
@@ -207,12 +279,12 @@ export default function ManagerEvents() {
 
     try {
       await api.post(`/events/${selectedEvent.id}/organizers`, {
-        userId: parseInt(selectedUserId),
+        utorid: selectedUserId,
       });
       alert("Organizer added successfully!");
       setSelectedUserId("");
-      // Refresh event data
-      const updatedEvent = await api.get(`/events/${selectedEvent.id}`);
+      // Refresh event data with transformed structure
+      const updatedEvent = await fetchEventWithGuestDetails(selectedEvent.id);
       setSelectedEvent(updatedEvent);
       fetchEvents();
     } catch (err) {
@@ -224,12 +296,157 @@ export default function ManagerEvents() {
     try {
       await api.delete(`/events/${selectedEvent.id}/organizers/${userId}`);
       alert("Organizer removed successfully!");
-      // Refresh event data
-      const updatedEvent = await api.get(`/events/${selectedEvent.id}`);
+      // Refresh event data with transformed structure
+      const updatedEvent = await fetchEventWithGuestDetails(selectedEvent.id);
       setSelectedEvent(updatedEvent);
       fetchEvents();
     } catch (err) {
       alert(err.message || "Failed to remove organizer");
+    }
+  };
+
+  // Handle View Attendees
+  const handleViewAttendees = async (event) => {
+    try {
+      // Fetch full event details with guest user data
+      const fullEventData = await fetchEventWithGuestDetails(event.id);
+      setSelectedEvent(fullEventData);
+      setShowAttendeesModal(true);
+    } catch (err) {
+      alert(err.message || "Failed to load attendees");
+    }
+  };
+
+  // Handle Remove Guest
+  const handleRemoveGuest = async (guestUserId) => {
+    if (!window.confirm("Are you sure you want to remove this attendee?")) {
+      return;
+    }
+
+    try {
+      await api.delete(`/events/${selectedEvent.id}/guests/${guestUserId}`);
+      alert("Attendee removed successfully!");
+
+      // Refresh event data with guest details
+      const updatedEvent = await fetchEventWithGuestDetails(selectedEvent.id);
+      setSelectedEvent(updatedEvent);
+      fetchEvents();
+    } catch (err) {
+      alert(err.message || "Failed to remove attendee");
+    }
+  };
+
+  // Handle Manage Points
+  const handleManagePoints = async (event) => {
+    try {
+      // Fetch full event details with guest user data
+      const fullEventData = await fetchEventWithGuestDetails(event.id);
+      setSelectedEvent(fullEventData);
+      setPointsToAward("");
+
+      // Initialize guest points map with empty values
+      const initialMap = {};
+      fullEventData.guests?.forEach(guest => {
+        initialMap[guest.userId] = "";
+      });
+      setGuestPointsMap(initialMap);
+
+      setShowPointsModal(true);
+    } catch (err) {
+      alert(err.message || "Failed to load event details");
+    }
+  };
+
+  // Award points to a specific guest
+  const handleAwardPoints = async (guestUserId) => {
+    const points = parseInt(guestPointsMap[guestUserId]);
+
+    if (!points || points <= 0) {
+      alert("Please enter a valid number of points");
+      return;
+    }
+
+    if (points > selectedEvent.pointsRemain) {
+      alert(`Only ${selectedEvent.pointsRemain} points remaining for this event`);
+      return;
+    }
+
+    try {
+      setAwardingPoints(true);
+
+      // Find the guest to get their utorid
+      const guest = selectedEvent.guests.find(g => g.userId === guestUserId);
+      if (!guest || !guest.user?.utorid) {
+        alert("Guest information not found");
+        return;
+      }
+
+      await api.post(`/events/${selectedEvent.id}/transactions`, {
+        type: "event",
+        utorid: guest.user.utorid,
+        amount: points,
+      });
+
+      alert(`Successfully awarded ${points} points!`);
+
+      // Refresh event data with guest details
+      const updatedEvent = await fetchEventWithGuestDetails(selectedEvent.id);
+      setSelectedEvent(updatedEvent);
+
+      // Clear the input for this guest
+      setGuestPointsMap(prev => ({
+        ...prev,
+        [guestUserId]: "",
+      }));
+
+      fetchEvents();
+    } catch (err) {
+      alert(err.message || "Failed to award points");
+    } finally {
+      setAwardingPoints(false);
+    }
+  };
+
+  // Award points to all guests
+  const handleAwardPointsToAll = async () => {
+    const points = parseInt(pointsToAward);
+
+    if (!points || points <= 0) {
+      alert("Please enter a valid number of points");
+      return;
+    }
+
+    const totalPointsNeeded = points * (selectedEvent.guests?.length || 0);
+    if (totalPointsNeeded > selectedEvent.pointsRemain) {
+      alert(`Not enough points remaining. Need ${totalPointsNeeded}, but only ${selectedEvent.pointsRemain} available`);
+      return;
+    }
+
+    if (!window.confirm(`Award ${points} points to all ${selectedEvent.guests?.length || 0} attendees?`)) {
+      return;
+    }
+
+    try {
+      setAwardingPoints(true);
+
+      // Award points to all confirmed guests (omit utorid to award to all)
+      await api.post(`/events/${selectedEvent.id}/transactions`, {
+        type: "event",
+        amount: points,
+      });
+
+      alert(`Successfully awarded ${points} points to all attendees!`);
+
+      // Refresh event data with guest details
+      const updatedEvent = await fetchEventWithGuestDetails(selectedEvent.id);
+      setSelectedEvent(updatedEvent);
+      setPointsToAward("");
+
+      fetchEvents();
+    } catch (err) {
+      alert(err.message || "Failed to award points to all attendees");
+    } finally {
+      setAwardingPoints(false);
     }
   };
 
@@ -434,13 +651,21 @@ export default function ManagerEvents() {
                       </td>
                       <td>{event.location}</td>
                       <td>
-                        {event.capacity ? (
-                          <>
-                            {event.guests?.length || 0} / {event.capacity}
-                          </>
-                        ) : (
-                          "Unlimited"
-                        )}
+                        <button
+                          className="capacity-link"
+                          onClick={() => handleViewAttendees(event)}
+                          title="View Attendees"
+                        >
+                          {event.capacity ? (
+                            <>
+                              <i className="fas fa-users"></i> {event.guests?.length || 0} / {event.capacity}
+                            </>
+                          ) : (
+                            <>
+                              <i className="fas fa-users"></i> {event.guests?.length || 0} (Unlimited)
+                            </>
+                          )}
+                        </button>
                       </td>
                       <td>
                         <div className="points-cell">
@@ -477,6 +702,14 @@ export default function ManagerEvents() {
                             title="Manage Organizers"
                           >
                             <i className="fas fa-users-cog"></i>
+                          </button>
+                          <button
+                            className="btn-icon btn-points"
+                            onClick={() => handleManagePoints(event)}
+                            title="Award Points"
+                            disabled={!event.guests || event.guests.length === 0}
+                          >
+                            <i className="fas fa-award"></i>
                           </button>
                           <button
                             className="btn-icon btn-delete"
@@ -802,7 +1035,7 @@ export default function ManagerEvents() {
                   >
                     <option value="">Select a user...</option>
                     {availableUsers.map((user) => (
-                      <option key={user.id} value={user.id}>
+                      <option key={user.id} value={user.utorid}>
                         {user.name} ({user.utorid}) - {user.role}
                       </option>
                     ))}
@@ -816,6 +1049,247 @@ export default function ManagerEvents() {
 
             <div className="modal-actions">
               <button className="btn-secondary" onClick={() => setShowOrganizerModal(false)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Attendees Modal */}
+      {showAttendeesModal && selectedEvent && (
+        <div className="modal-overlay" onClick={() => setShowAttendeesModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Event Attendees</h2>
+              <button className="modal-close" onClick={() => setShowAttendeesModal(false)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <h3 className="event-title">{selectedEvent.name}</h3>
+
+              {/* Attendee Stats */}
+              <div className="attendee-stats">
+                <div className="stat-box">
+                  <i className="fas fa-users"></i>
+                  <div>
+                    <strong>Total Attendees</strong>
+                    <p>{selectedEvent.guests?.length || 0}</p>
+                  </div>
+                </div>
+                <div className="stat-box">
+                  <i className="fas fa-chair"></i>
+                  <div>
+                    <strong>Capacity</strong>
+                    <p>{selectedEvent.capacity || "Unlimited"}</p>
+                  </div>
+                </div>
+                <div className="stat-box">
+                  <i className="fas fa-percentage"></i>
+                  <div>
+                    <strong>Fill Rate</strong>
+                    <p>
+                      {selectedEvent.capacity
+                        ? `${Math.round((selectedEvent.guests?.length || 0) / selectedEvent.capacity * 100)}%`
+                        : "N/A"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Attendees List */}
+              <div className="attendees-section">
+                <h4>Registered Attendees</h4>
+                {selectedEvent.guests && selectedEvent.guests.length > 0 ? (
+                  <div className="attendees-grid-view">
+                    {selectedEvent.guests.map((guest) => (
+                      <div key={guest.userId} className="attendee-card">
+                        <div className="attendee-avatar">
+                          <i className="fas fa-user-circle"></i>
+                        </div>
+                        <div className="attendee-details">
+                          <strong>{guest.user?.name || "Unknown"}</strong>
+                          <small>{guest.user?.utorid}</small>
+                          <span className="attendee-email">{guest.user?.email}</span>
+                        </div>
+                        <button
+                          className="btn-remove-attendee"
+                          onClick={() => handleRemoveGuest(guest.userId)}
+                          title="Remove Attendee"
+                        >
+                          <i className="fas fa-user-times"></i>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="empty-message">No attendees have registered yet.</p>
+                )}
+              </div>
+
+              {/* Quick Actions */}
+              <div className="attendee-actions">
+                <button
+                  className="btn-secondary"
+                  onClick={() => {
+                    setShowAttendeesModal(false);
+                    handleManagePoints(selectedEvent);
+                  }}
+                  disabled={!selectedEvent.guests || selectedEvent.guests.length === 0}
+                >
+                  <i className="fas fa-award"></i> Award Points
+                </button>
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={() => setShowAttendeesModal(false)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Award Points Modal */}
+      {showPointsModal && selectedEvent && (
+        <div className="modal-overlay" onClick={() => setShowPointsModal(false)}>
+          <div className="modal-content points-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Award Points to Attendees</h2>
+              <button className="modal-close" onClick={() => setShowPointsModal(false)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <h3 className="event-title">{selectedEvent.name}</h3>
+
+              {/* Event Points Summary */}
+              <div className="points-summary">
+                <div className="points-stat">
+                  <i className="fas fa-star"></i>
+                  <div>
+                    <strong>Total Points</strong>
+                    <p>{selectedEvent.points}</p>
+                  </div>
+                </div>
+                <div className="points-stat">
+                  <i className="fas fa-gift"></i>
+                  <div>
+                    <strong>Points Remaining</strong>
+                    <p className={selectedEvent.pointsRemain > 0 ? "text-success" : "text-danger"}>
+                      {selectedEvent.pointsRemain}
+                    </p>
+                  </div>
+                </div>
+                <div className="points-stat">
+                  <i className="fas fa-users"></i>
+                  <div>
+                    <strong>Total Attendees</strong>
+                    <p>{selectedEvent.guests?.length || 0}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Award Points to All */}
+              {selectedEvent.guests && selectedEvent.guests.length > 0 && selectedEvent.pointsRemain > 0 && (
+                <div className="award-all-section">
+                  <h4>Award Points to All Attendees</h4>
+                  <div className="award-all-form">
+                    <input
+                      type="number"
+                      value={pointsToAward}
+                      onChange={(e) => setPointsToAward(e.target.value)}
+                      placeholder="Points per person"
+                      min="1"
+                      max={Math.floor(selectedEvent.pointsRemain / selectedEvent.guests.length)}
+                      disabled={awardingPoints}
+                    />
+                    <button
+                      className="btn-primary"
+                      onClick={handleAwardPointsToAll}
+                      disabled={awardingPoints || !pointsToAward}
+                    >
+                      {awardingPoints ? (
+                        <>
+                          <i className="fas fa-spinner fa-spin"></i> Awarding...
+                        </>
+                      ) : (
+                        <>
+                          <i className="fas fa-gift"></i> Award to All
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <small className="help-text">
+                    Max {Math.floor(selectedEvent.pointsRemain / selectedEvent.guests.length)} points per person
+                  </small>
+                </div>
+              )}
+
+              {/* Individual Attendees */}
+              <div className="attendees-section">
+                <h4>Individual Attendees</h4>
+                {selectedEvent.guests && selectedEvent.guests.length > 0 ? (
+                  <div className="attendees-list">
+                    {selectedEvent.guests.map((guest) => (
+                      <div key={guest.userId} className="attendee-points-item">
+                        <div className="attendee-info">
+                          <i className="fas fa-user-circle"></i>
+                          <div>
+                            <strong>{guest.user?.name || "Unknown"}</strong>
+                            <small>{guest.user?.utorid}</small>
+                          </div>
+                        </div>
+                        <div className="attendee-points-actions">
+                          <input
+                            type="number"
+                            value={guestPointsMap[guest.userId] || ""}
+                            onChange={(e) =>
+                              setGuestPointsMap(prev => ({
+                                ...prev,
+                                [guest.userId]: e.target.value,
+                              }))
+                            }
+                            placeholder="Points"
+                            min="1"
+                            max={selectedEvent.pointsRemain}
+                            disabled={awardingPoints}
+                            className="points-input"
+                          />
+                          <button
+                            className="btn-award"
+                            onClick={() => handleAwardPoints(guest.userId)}
+                            disabled={
+                              awardingPoints ||
+                              !guestPointsMap[guest.userId] ||
+                              selectedEvent.pointsRemain <= 0
+                            }
+                          >
+                            <i className="fas fa-arrow-right"></i>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="empty-message">No attendees for this event yet.</p>
+                )}
+              </div>
+
+              {selectedEvent.pointsRemain <= 0 && (
+                <div className="warning-message">
+                  <i className="fas fa-exclamation-triangle"></i>
+                  <p>No points remaining for this event.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={() => setShowPointsModal(false)}>
                 Close
               </button>
             </div>

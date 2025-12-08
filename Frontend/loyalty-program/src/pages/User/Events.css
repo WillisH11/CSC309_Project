@@ -144,6 +144,12 @@
   letter-spacing: 0.5px;
 }
 
+.badge-attending {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
 .badge-upcoming {
   background: #d4edda;
   color: #155724;
