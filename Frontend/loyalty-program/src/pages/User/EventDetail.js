@@ -73,12 +73,19 @@ export default function EventDetail() {
   const handleRSVP = async () => {
     try {
       setRsvpLoading(true);
+
+      // Save current scroll position
+      const scrollPosition = window.scrollY;
+
       await api.post(`/events/${eventId}/guests/me`);
 
       // Refresh event details
       await fetchEventDetails();
 
-      alert("RSVP successful! You're registered for this event.");
+      // Restore scroll position after render
+      setTimeout(() => {
+        window.scrollTo(0, scrollPosition);
+      }, 0);
     } catch (err) {
       alert(err.message || "Failed to RSVP. Please try again.");
       console.error("RSVP error:", err);
@@ -95,12 +102,19 @@ export default function EventDetail() {
 
     try {
       setRsvpLoading(true);
+
+      // Save current scroll position
+      const scrollPosition = window.scrollY;
+
       await api.delete(`/events/${eventId}/guests/me`);
 
       // Refresh event details
       await fetchEventDetails();
 
-      alert("RSVP cancelled successfully.");
+      // Restore scroll position after render
+      setTimeout(() => {
+        window.scrollTo(0, scrollPosition);
+      }, 0);
     } catch (err) {
       alert(err.message || "Failed to cancel RSVP. Please try again.");
       console.error("Cancel RSVP error:", err);
@@ -176,10 +190,11 @@ export default function EventDetail() {
         <div className="error-state">
           <i className="fas fa-exclamation-circle"></i>
           <p>{error}</p>
-          <button className="btn-retry" onClick={fetchEventDetails}>
+          <button type="button" className="btn-retry" onClick={fetchEventDetails}>
             Try Again
           </button>
           <button
+            type="button"
             className="btn-back btn-back-spaced"
             onClick={() => navigate("/events")}
           >
@@ -196,7 +211,7 @@ export default function EventDetail() {
         <div className="empty-state">
           <i className="fas fa-calendar-times empty-icon"></i>
           <h3>Event not found</h3>
-          <button className="btn-back" onClick={() => navigate("/events")}>
+          <button type="button" className="btn-back" onClick={() => navigate("/events")}>
             Back to Events
           </button>
         </div>
@@ -207,7 +222,7 @@ export default function EventDetail() {
   return (
     <div className="dashboard-container">
       {/* Back Button */}
-      <button className="btn-back-link" onClick={() => navigate("/events")}>
+      <button type="button" className="btn-back-link" onClick={() => navigate("/events")}>
         <i className="fas fa-arrow-left"></i> Back to Events
       </button>
 
@@ -359,6 +374,7 @@ export default function EventDetail() {
                     <p>You're registered for this event!</p>
                   </div>
                   <button
+                    type="button"
                     className="btn-cancel-rsvp"
                     onClick={handleCancelRSVP}
                     disabled={rsvpLoading || isPastEvent()}
@@ -378,6 +394,7 @@ export default function EventDetail() {
                 <>
                   {canRSVP() ? (
                     <button
+                      type="button"
                       className="btn-rsvp"
                       onClick={handleRSVP}
                       disabled={rsvpLoading}

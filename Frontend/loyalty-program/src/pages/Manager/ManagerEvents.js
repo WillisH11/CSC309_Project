@@ -209,7 +209,6 @@ export default function ManagerEvents() {
       };
 
       await api.post("/events", payload);
-      alert("Event created successfully!");
       setShowCreateModal(false);
       fetchEvents();
     } catch (err) {
@@ -244,7 +243,6 @@ export default function ManagerEvents() {
       };
 
       await api.patch(`/events/${selectedEvent.id}`, payload);
-      alert("Event updated successfully!");
       setShowEditModal(false);
       fetchEvents();
     } catch (err) {
@@ -264,7 +262,6 @@ export default function ManagerEvents() {
 
     try {
       await api.delete(`/events/${eventId}`);
-      alert("Event deleted successfully!");
       fetchEvents();
     } catch (err) {
       alert(err.message || "Failed to delete event. It may have guests.");
@@ -288,7 +285,6 @@ export default function ManagerEvents() {
       await api.post(`/events/${selectedEvent.id}/organizers`, {
         utorid: selectedUserId,
       });
-      alert("Organizer added successfully!");
       setSelectedUserId("");
       // Refresh event data with transformed structure
       const updatedEvent = await fetchEventWithGuestDetails(selectedEvent.id);
@@ -302,7 +298,6 @@ export default function ManagerEvents() {
   const handleRemoveOrganizer = async (userId) => {
     try {
       await api.delete(`/events/${selectedEvent.id}/organizers/${userId}`);
-      alert("Organizer removed successfully!");
       // Refresh event data with transformed structure
       const updatedEvent = await fetchEventWithGuestDetails(selectedEvent.id);
       setSelectedEvent(updatedEvent);
@@ -332,7 +327,6 @@ export default function ManagerEvents() {
 
     try {
       await api.delete(`/events/${selectedEvent.id}/guests/${guestUserId}`);
-      alert("Attendee removed successfully!");
 
       // Refresh event data with guest details
       const updatedEvent = await fetchEventWithGuestDetails(selectedEvent.id);
@@ -396,8 +390,6 @@ export default function ManagerEvents() {
         amount: points,
       });
 
-      alert(`Successfully awarded ${points} points!`);
-
       // Refresh event data with guest details
       const updatedEvent = await fetchEventWithGuestDetails(selectedEvent.id);
       setSelectedEvent(updatedEvent);
@@ -451,8 +443,6 @@ export default function ManagerEvents() {
         type: "event",
         amount: points,
       });
-
-      alert(`Successfully awarded ${points} points to all attendees!`);
 
       // Refresh event data with guest details
       const updatedEvent = await fetchEventWithGuestDetails(selectedEvent.id);
@@ -547,18 +537,21 @@ export default function ManagerEvents() {
       <div className="action-bar">
         <div className="filter-buttons">
           <button
+            type="button"
             className={`filter-btn ${filter === "all" ? "active" : ""}`}
             onClick={() => handleFilterChange("all")}
           >
             <i className="fas fa-list"></i> All Events
           </button>
           <button
+            type="button"
             className={`filter-btn ${filter === "published" ? "active" : ""}`}
             onClick={() => handleFilterChange("published")}
           >
             <i className="fas fa-check-circle"></i> Published
           </button>
           <button
+            type="button"
             className={`filter-btn ${filter === "draft" ? "active" : ""}`}
             onClick={() => handleFilterChange("draft")}
           >
@@ -566,7 +559,7 @@ export default function ManagerEvents() {
           </button>
         </div>
 
-        <button className="btn-primary" onClick={handleCreate}>
+        <button type="button" className="btn-primary" onClick={handleCreate}>
           <i className="fas fa-plus-circle"></i> Create New Event
         </button>
       </div>
@@ -584,7 +577,7 @@ export default function ManagerEvents() {
         <div className="error-state">
           <i className="fas fa-exclamation-circle"></i>
           <p>{error}</p>
-          <button className="btn-retry" onClick={fetchEvents}>
+          <button type="button" className="btn-retry" onClick={fetchEvents}>
             Try Again
           </button>
         </div>
@@ -599,6 +592,7 @@ export default function ManagerEvents() {
                 <tr>
                   <th>
                     <button
+                      type="button"
                       className="sort-button"
                       onClick={() => handleSort("name")}
                     >
@@ -615,6 +609,7 @@ export default function ManagerEvents() {
                   </th>
                   <th>
                     <button
+                      type="button"
                       className="sort-button"
                       onClick={() => handleSort("date")}
                     >
@@ -634,6 +629,7 @@ export default function ManagerEvents() {
                   <th>Points</th>
                   <th>
                     <button
+                      type="button"
                       className="sort-button"
                       onClick={() => handleSort("status")}
                     >
@@ -687,6 +683,7 @@ export default function ManagerEvents() {
                       <td>{event.location}</td>
                       <td>
                         <button
+                          type="button"
                           className="capacity-link"
                           onClick={() => handleViewAttendees(event)}
                           title="View Attendees"
@@ -726,6 +723,7 @@ export default function ManagerEvents() {
                       <td>
                         <div className="action-buttons">
                           <button
+                            type="button"
                             className="btn-icon btn-view"
                             onClick={() => navigate(`/events/${event.id}`)}
                             title="View"
@@ -733,6 +731,7 @@ export default function ManagerEvents() {
                             <i className="fas fa-eye"></i>
                           </button>
                           <button
+                            type="button"
                             className="btn-icon btn-edit"
                             onClick={() => handleEdit(event)}
                             title="Edit"
@@ -740,6 +739,7 @@ export default function ManagerEvents() {
                             <i className="fas fa-edit"></i>
                           </button>
                           <button
+                            type="button"
                             className="btn-icon btn-organizers"
                             onClick={() => handleManageOrganizers(event)}
                             title="Manage Organizers"
@@ -747,6 +747,7 @@ export default function ManagerEvents() {
                             <i className="fas fa-users-cog"></i>
                           </button>
                           <button
+                            type="button"
                             className="btn-icon btn-points"
                             onClick={() => handleManagePoints(event)}
                             title="Award Points"
@@ -757,6 +758,7 @@ export default function ManagerEvents() {
                             <i className="fas fa-award"></i>
                           </button>
                           <button
+                            type="button"
                             className="btn-icon btn-delete"
                             onClick={() => handleDelete(event.id, event.name)}
                             title="Delete"
@@ -776,6 +778,7 @@ export default function ManagerEvents() {
           {totalPages > 1 && (
             <div className="pagination">
               <button
+                type="button"
                 className="pagination-btn"
                 onClick={() => setCurrentPage((p) => p - 1)}
                 disabled={currentPage === 1}
@@ -788,6 +791,7 @@ export default function ManagerEvents() {
               </div>
 
               <button
+                type="button"
                 className="pagination-btn"
                 onClick={() => setCurrentPage((p) => p + 1)}
                 disabled={currentPage === totalPages}
@@ -809,6 +813,7 @@ export default function ManagerEvents() {
             <div className="modal-header">
               <h2>Create New Event</h2>
               <button
+                type="button"
                 className="modal-close"
                 onClick={() => setShowCreateModal(false)}
               >
@@ -947,6 +952,7 @@ export default function ManagerEvents() {
             <div className="modal-header">
               <h2>Edit Event</h2>
               <button
+                type="button"
                 className="modal-close"
                 onClick={() => setShowEditModal(false)}
               >
@@ -1088,6 +1094,7 @@ export default function ManagerEvents() {
             <div className="modal-header">
               <h2>Manage Organizers</h2>
               <button
+                type="button"
                 className="modal-close"
                 onClick={() => setShowOrganizerModal(false)}
               >
@@ -1111,6 +1118,7 @@ export default function ManagerEvents() {
                           <small> ({org.user?.utorid})</small>
                         </div>
                         <button
+                          type="button"
                           className="btn-icon btn-delete"
                           onClick={() => handleRemoveOrganizer(org.userId)}
                           title="Remove"
@@ -1141,7 +1149,7 @@ export default function ManagerEvents() {
                       </option>
                     ))}
                   </select>
-                  <button className="btn-primary" onClick={handleAddOrganizer}>
+                  <button type="button" className="btn-primary" onClick={handleAddOrganizer}>
                     <i className="fas fa-plus"></i> Add
                   </button>
                 </div>
@@ -1150,6 +1158,7 @@ export default function ManagerEvents() {
 
             <div className="modal-actions">
               <button
+                type="button"
                 className="btn-secondary"
                 onClick={() => setShowOrganizerModal(false)}
               >
@@ -1170,6 +1179,7 @@ export default function ManagerEvents() {
             <div className="modal-header">
               <h2>Event Attendees</h2>
               <button
+                type="button"
                 className="modal-close"
                 onClick={() => setShowAttendeesModal(false)}
               >
@@ -1231,6 +1241,7 @@ export default function ManagerEvents() {
                           </span>
                         </div>
                         <button
+                          type="button"
                           className="btn-remove-attendee"
                           onClick={() => handleRemoveGuest(guest.userId)}
                           title="Remove Attendee"
@@ -1250,6 +1261,7 @@ export default function ManagerEvents() {
               {/* Quick Actions */}
               <div className="attendee-actions">
                 <button
+                  type="button"
                   className="btn-secondary"
                   onClick={() => {
                     setShowAttendeesModal(false);
@@ -1266,6 +1278,7 @@ export default function ManagerEvents() {
 
             <div className="modal-actions">
               <button
+                type="button"
                 className="btn-secondary"
                 onClick={() => setShowAttendeesModal(false)}
               >
@@ -1289,6 +1302,7 @@ export default function ManagerEvents() {
             <div className="modal-header">
               <h2>Award Points to Attendees</h2>
               <button
+                type="button"
                 className="modal-close"
                 onClick={() => setShowPointsModal(false)}
               >
@@ -1352,6 +1366,7 @@ export default function ManagerEvents() {
                         disabled={awardingPoints}
                       />
                       <button
+                        type="button"
                         className="btn-primary"
                         onClick={handleAwardPointsToAll}
                         disabled={awardingPoints || !pointsToAward}
@@ -1409,6 +1424,7 @@ export default function ManagerEvents() {
                             className="points-input"
                           />
                           <button
+                            type="button"
                             className="btn-award"
                             onClick={() => handleAwardPoints(guest.userId)}
                             disabled={
@@ -1440,6 +1456,7 @@ export default function ManagerEvents() {
 
             <div className="modal-actions">
               <button
+                type="button"
                 className="btn-secondary"
                 onClick={() => setShowPointsModal(false)}
               >
