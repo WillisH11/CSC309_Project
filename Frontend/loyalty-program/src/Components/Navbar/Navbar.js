@@ -8,6 +8,7 @@ import {
   MenuItemsCashier,
   MenuItemsManager,
   MenuItemsSuper,
+  MenuItemsOrganizer,
 } from "./NavbarMenus";
 
 const Navbar = () => {
@@ -21,6 +22,7 @@ const Navbar = () => {
   if (activeRole === "cashier") menu = MenuItemsCashier;
   else if (activeRole === "manager") menu = MenuItemsManager;
   else if (activeRole === "superuser") menu = MenuItemsSuper;
+  else if (activeRole === "organizer") menu = MenuItemsOrganizer;
   if (!user) menu = [];
 
   return (
@@ -51,7 +53,7 @@ const Navbar = () => {
           </li>
         ))}
 
-        {user && user.role !== "regular" && (
+        {user && (user.role !== "regular" || user.isOrganizer) && (
           <li>
             <select
               className="nav-links"
@@ -72,11 +74,12 @@ const Navbar = () => {
                 <option value="cashier">Cashier Console</option>
               )}
 
+              {(user.role === "manager" || user.isOrganizer) && (
+                <option value="organizer">Organizer View</option>
+              )}
+
               {user.role === "manager" && (
-                <>
-                  <option value="manager">Manager Dashboard</option>
-                  <option value="organizer">Organizer View</option>
-                </>
+                <option value="manager">Manager Dashboard</option>
               )}
 
               {user.role === "superuser" && (

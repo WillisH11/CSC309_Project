@@ -26,3 +26,8 @@ export const MenuItemsSuper = [
   { title: "Home", url: "/dashboard", cName: "nav-links" },
   { title: "Promote Users", url: "/super/promote", cName: "nav-links" },
 ];
+
+export const MenuItemsOrganizer = [
+  { title: "Home", url: "/dashboard", cName: "nav-links" },
+  { title: "Events", url: "/manager/events", cName: "nav-links" },
+];
