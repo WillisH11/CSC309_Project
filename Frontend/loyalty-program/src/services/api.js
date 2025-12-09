@@ -48,11 +48,20 @@ class ApiService {
         throw new Error("Session expired. Please login again.");
       }
 
+      // Handle empty responses (e.g., 204 No Content)
+      if (response.status === 204 || response.headers.get("content-length") === "0") {
+        if (!response.ok) {
+          throw new Error("Request failed");
+        }
+        return null; // Return null for empty successful responses
+      }
+
       // Parse JSON response
-      const data = await response.json();
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : null;
 
       if (!response.ok) {
-        throw new Error(data.error || data.message || "Request failed");
+        throw new Error(data?.error || data?.message || "Request failed");
       }
 
       return data;
