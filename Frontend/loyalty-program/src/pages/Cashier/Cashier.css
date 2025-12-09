@@ -2,6 +2,7 @@
     text-align: center;
     padding: 3rem 1rem;
 }
+
 .cashier-options {
     display: flex;
     justify-content: center;
@@ -15,7 +16,7 @@
     width: 250px;
     padding: 2rem;
     background: white;
-    border: 3px solid transparent; 
+    border: 3px solid transparent;
     border-radius: 12px;
     text-decoration: none;
     color: var(--color-text-main);
@@ -33,6 +34,7 @@
     transform: translateY(-5px);
     background-color: #fffdf5;
 }
+
 .cashier-card i {
     font-size: 3rem;
     margin-bottom: 1rem;
@@ -46,5 +48,86 @@
     padding: 2.5rem;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    border-top: 5px solid var(--color-brand-red); 
+    border-top: 5px solid var(--color-brand-blue);
+    text-align: left;
+}
+
+.cashier-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+}
+
+.cashier-form-container label {
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+    display: block;
+}
+
+.cashier-form-container input {
+    padding: 0.85rem;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-size: 1rem;
+    width: 100%;
+}
+
+.hint {
+    font-size: 0.85rem;
+    color: #777;
+    margin-top: -0.4rem;
+}
+
+.earned-preview {
+    background: #fff8e6;
+    border-left: 5px solid var(--color-brand-orange);
+    padding: 0.9rem 1rem;
+    border-radius: 8px;
+    font-weight: bold;
+    color: #b46900;
+    margin-top: -0.5rem;
+}
+
+.cashier-button {
+    padding: 0.9rem;
+    background: var(--color-brand-blue);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.cashier-button:hover {
+    background: var(--color-brand-orange);
+}
+
+.banner {
+    padding: 0.85rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.2rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.success-banner {
+    background: #e8fbe9;
+    color: #1a7f37;
+    border-left: 5px solid #1a7f37;
+}
+
+.error-banner {
+    background: #ffe9e9;
+    color: #c62828;
+    border-left: 5px solid #c62828;
+}
+
+.redeem-card {
+    border: 1px solid #eee;
+    padding: 1.25rem;
+    margin-bottom: 1.2rem;
+    border-radius: 10px;
+    background: #fafafa;
+    text-align: left;
 }
