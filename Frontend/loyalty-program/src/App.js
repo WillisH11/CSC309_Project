@@ -24,6 +24,7 @@ import ResetPassword from "./pages/Auth/ResetPassword.js";
 // Cashier pages
 import CashierCreate from "./pages/Cashier/CashierCreate.js";
 import CashierRedeem from "./pages/Cashier/CashierRedeem.js";
+import RegisterUser from "./pages/Cashier/RegisterUser.js";
 
 // Manager pages
 import ManagerUsers from "./pages/Manager/ManagerUsers.js";
@@ -172,6 +173,15 @@ function App() {
           element={
             <ProtectedRoute>
               <CashierRedeem />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/cashier/register"
+          element={
+            <ProtectedRoute>
+              <RegisterUser />
             </ProtectedRoute>
           }
         />
