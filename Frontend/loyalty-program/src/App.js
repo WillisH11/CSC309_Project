@@ -9,6 +9,7 @@ import Transfer from "./pages/User/Transfer.js";
 import Redeem from "./pages/User/Redeem.js";
 import Promotions from "./pages/User/Promotions.js";
 import Events from "./pages/User/Events.js";
+import EventDetail from "./pages/User/EventDetail.js";
 import Transactions from "./pages/User/Transactions.js";
 import Wallet from "./pages/User/Wallet";
 import Rewards from "./pages/User/Rewards";
@@ -103,6 +104,15 @@ function App() {
           element={
             <ProtectedRoute>
               <Events />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/events/:eventId"
+          element={
+            <ProtectedRoute>
+              <EventDetail />
             </ProtectedRoute>
           }
         />
