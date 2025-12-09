@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./Navbar.css";
 import { useAuth } from "../../Contexts/AuthContext";
 
@@ -15,8 +15,14 @@ const Navbar = () => {
   const [clicked, setClicked] = useState(false);
   const { user, activeRole, setActiveRole, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const handleClick = () => setClicked(!clicked);
+
+  const handleRoleChange = (e) => {
+    setActiveRole(e.target.value);
+    navigate("/dashboard");
+  };
 
   let menu = MenuItemsUser;
   if (activeRole === "cashier") menu = MenuItemsCashier;
@@ -58,7 +64,7 @@ const Navbar = () => {
             <select
               className="nav-links"
               value={activeRole}
-              onChange={(e) => setActiveRole(e.target.value)}
+              onChange={handleRoleChange}
               style={{
                 background: "transparent",
                 border: "none",
