@@ -1,39 +1,115 @@
-.transactions-page {
-  padding: 20px;
+/* Page */
+.tx-page {
+  padding: 2rem;
+  max-width: 900px;
+  margin: auto;
 }
 
-.transactions-list {
+.tx-title {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #333;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.tx-empty,
+.tx-loading {
+  text-align: center;
+  margin-top: 2rem;
+  color: #777;
+  font-style: italic;
+}
+
+/* List */
+.tx-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1.3rem;
 }
 
-.transaction-card {
-  background: white;
-  padding: 16px;
-  border-radius: 10px;
-  border-left: 6px solid #ffa726;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+/* Card */
+.tx-card {
+  background: #fff;
+  padding: 1.4rem 1.6rem;
+  border-radius: 12px;
+  box-shadow: 0px 3px 12px rgba(0, 0, 0, 0.07);
+  border-left: 6px solid transparent;
+  transition: 0.15s ease;
+}
+
+.tx-card:hover {
+  transform: translateY(-4px);
+}
+
+/* Type colors */
+.tx-card.purchase { border-color: #4cc9f0; }
+.tx-card.transfer { border-color: #f72585; }
+.tx-card.redemption { border-color: #ffba08; }
+.tx-card.adjustment { border-color: #7209b7; }
+
+/* Header */
+.tx-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tx-type {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #444;
+}
+
+.tx-amount {
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.tx-amount.positive {
+  color: #2ecc71;
+}
+
+.tx-amount.negative {
+  color: #e74c3c;
+}
+
+/* Body */
+.tx-body {
+  margin-top: 12px;
 }
 
 .tx-row {
   display: flex;
   justify-content: space-between;
+  padding: 5px 0;
+  font-size: 0.95rem;
 }
 
-.tx-type {
-  font-weight: bold;
+.tx-label {
+  color: #666;
 }
 
+.tx-value {
+  font-weight: 600;
+}
+
+/* Remark */
 .tx-remark {
-  margin-top: 6px;
-  font-size: 0.9rem;
-  color: #555;
+  margin-top: 10px;
+  color: #333;
+  font-style: italic;
 }
 
+.tx-remark i {
+  margin-right: 6px;
+  color: #aaa;
+}
+
+/* Date */
 .tx-date {
   margin-top: 10px;
-  font-size: 0.8rem;
-  color: #777;
-  display: block;
+  text-align: right;
+  color: #888;
+  font-size: 0.85rem;
 }
