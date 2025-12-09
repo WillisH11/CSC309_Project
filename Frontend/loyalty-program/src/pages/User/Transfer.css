@@ -1,0 +1,74 @@
+.transfer-container {
+  max-width: 450px;
+  margin: 2rem auto;
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.transfer-error {
+  background: #ffe5e5;
+  color: #b00000;
+  padding: 0.8rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.transfer-success {
+  background: #e0ffe8;
+  color: #0f7b36;
+  padding: 0.8rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.lookup-section label,
+.transfer-form label {
+  font-weight: bold;
+  margin-top: 1rem;
+  display: block;
+}
+
+.lookup-button,
+.send-button {
+  width: 100%;
+  padding: 0.9rem;
+  margin-top: 1rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.lookup-button:hover,
+.send-button:hover {
+  background: #2563eb;
+}
+
+input {
+  width: 100%;
+  padding: 0.7rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-top: 0.3rem;
+}
+
+.recipient-info {
+  margin-top: 1rem;
+  background: #f4faff;
+  padding: 0.8rem;
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid #d6eaff;
+}

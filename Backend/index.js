@@ -528,6 +528,44 @@ app.patch('/users/me/password', jwtMiddleware, async (req, res) => {
     }
 });
 
+// Lookup recipient by UTORid (Regular users ARE allowed)
+app.get("/users/find", jwtMiddleware, async (req, res) => {
+    const { utorid } = req.query;
+
+    if (!utorid) {
+        return res.status(400).json({ error: "Missing utorid" });
+    }
+
+    const user = await prisma.user.findUnique({
+        where: { utorid },
+        select: { id: true, utorid: true, name: true }
+    });
+
+    if (!user) {
+        return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json(user);
+});
+
+
+app.get("/users/search-transfer", jwtMiddleware, async (req, res) => {
+    const { utorid } = req.query;
+
+    if (!utorid) return res.status(400).json({ error: "Missing UTORid" });
+
+    const user = await prisma.user.findUnique({
+        where: { utorid },
+        select: { id: true, utorid: true, name: true }
+    });
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    res.json(user);
+});
+
+
+
 // List users 
 app.get('/users', jwtMiddleware, async (req, res) => {
     try {
@@ -814,6 +852,38 @@ app.patch('/users/:userId', jwtMiddleware, async (req, res) => {
 });
 
 // TRANSACTIONS
+
+// Cashier: Get pending redemption requests
+app.get('/transactions/redemption/pending', jwtMiddleware, async (req, res) => {
+    try {
+        if (!['cashier', 'manager', 'superuser'].includes(req.auth.role)) {
+            return res.status(403).json({ error: "Forbidden" });
+        }
+
+        const pending = await prisma.transaction.findMany({
+            where: {
+                type: "redemption",
+                relatedId: null
+            },
+            include: {
+                user: {
+                    select: { utorid: true, name: true }
+                },
+                createdBy: {
+                    select: { utorid: true }
+                }
+            },
+            orderBy: { createdAt: "desc" }
+        });
+
+        res.json({ results: pending });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 
 // Create purchase or adjustment transaction
 app.post('/transactions', jwtMiddleware, async (req, res) => {
@@ -1365,6 +1435,7 @@ app.patch('/transactions/:transactionId/suspicious', jwtMiddleware, async (req, 
         res.status(500).json({ error: "Internal server error" });
     }
 });
+
 
 // Process redemption 
 app.patch('/transactions/:transactionId/processed', jwtMiddleware, async (req, res) => {
