@@ -18,6 +18,8 @@ import RedeemQR from "./pages/User/RedeemQR";
 // Auth pages
 import Login from "./pages/Auth/Login.js";
 import Profile from "./pages/Auth/Profile.js";
+import ForgotPassword from "./pages/Auth/ForgotPassword.js";
+import ResetPassword from "./pages/Auth/ResetPassword.js";
 
 // Cashier pages
 import CashierCreate from "./pages/Cashier/CashierCreate.js";
@@ -41,8 +43,10 @@ function App() {
       <Navbar />
 
       <Routes>
-        {/* Public route */}
+        {/* Public routes */}
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:resetToken?" element={<ResetPassword />} />
 
         {/* Auth-protected routes */}
         <Route
