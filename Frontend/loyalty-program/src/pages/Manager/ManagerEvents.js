@@ -57,6 +57,11 @@ export default function ManagerEvents() {
   const [awardingPoints, setAwardingPoints] = useState(false);
   const [guestPointsMap, setGuestPointsMap] = useState({}); // Track individual points for each guest
 
+  // Add guest
+  const [newGuestUtorid, setNewGuestUtorid] = useState("");
+  const [addingGuest, setAddingGuest] = useState(false);
+  const [guestSuccessMessage, setGuestSuccessMessage] = useState("");
+
   // Fetch events
   useEffect(() => {
     fetchEvents();
@@ -322,10 +327,18 @@ export default function ManagerEvents() {
       // Fetch full event details with guest user data
       const fullEventData = await fetchEventWithGuestDetails(event.id);
       setSelectedEvent(fullEventData);
+      setNewGuestUtorid(""); // Reset add guest form
       setShowAttendeesModal(true);
     } catch (err) {
       alert(err.message || "Failed to load attendees");
     }
+  };
+
+  // Close attendees modal and reset state
+  const closeAttendeesModal = () => {
+    setShowAttendeesModal(false);
+    setNewGuestUtorid("");
+    setGuestSuccessMessage("");
   };
 
   // Handle Remove Guest
@@ -343,6 +356,42 @@ export default function ManagerEvents() {
       fetchEvents();
     } catch (err) {
       alert(err.message || "Failed to remove attendee");
+    }
+  };
+
+  // Handle Add Guest
+  const handleAddGuest = async (e) => {
+    e.preventDefault();
+
+    if (!newGuestUtorid.trim()) {
+      alert("Please enter a UTORid");
+      return;
+    }
+
+    setAddingGuest(true);
+    setGuestSuccessMessage(""); // Clear any previous messages
+    try {
+      await api.post(`/events/${selectedEvent.id}/guests`, {
+        utorid: newGuestUtorid.trim(),
+      });
+
+      // Refresh event data with guest details
+      const updatedEvent = await fetchEventWithGuestDetails(selectedEvent.id);
+      setSelectedEvent(updatedEvent);
+      setNewGuestUtorid("");
+      fetchEvents();
+
+      // Show success message
+      setGuestSuccessMessage("Guest added successfully!");
+
+      // Auto-hide after 3 seconds
+      setTimeout(() => {
+        setGuestSuccessMessage("");
+      }, 3000);
+    } catch (err) {
+      alert(err.message || "Failed to add guest");
+    } finally {
+      setAddingGuest(false);
     }
   };
 
@@ -1201,7 +1250,7 @@ export default function ManagerEvents() {
       {showAttendeesModal && selectedEvent && (
         <div
           className="modal-overlay"
-          onClick={() => setShowAttendeesModal(false)}
+          onClick={closeAttendeesModal}
         >
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
@@ -1209,17 +1258,30 @@ export default function ManagerEvents() {
               <button
                 type="button"
                 className="modal-close"
-                onClick={() => setShowAttendeesModal(false)}
+                onClick={closeAttendeesModal}
               >
                 <i className="fas fa-times"></i>
               </button>
             </div>
 
             <div className="modal-body">
-              <h3 className="event-title">{selectedEvent.name}</h3>
+              {(() => {
+                const eventHasPassed = new Date(selectedEvent.endTime) < new Date();
 
-              {/* Attendee Stats */}
-              <div className="attendee-stats">
+                return (
+                  <>
+                    <h3 className="event-title">{selectedEvent.name}</h3>
+
+                    {/* Past Event Warning */}
+                    {eventHasPassed && (
+                      <div className="warning-message" style={{ marginBottom: "1rem" }}>
+                        <i className="fas fa-exclamation-triangle"></i>
+                        <p>This event has ended. You cannot add or remove guests.</p>
+                      </div>
+                    )}
+
+                    {/* Attendee Stats */}
+                    <div className="attendee-stats">
                 <div className="stat-box">
                   <i className="fas fa-users"></i>
                   <div>
@@ -1251,64 +1313,110 @@ export default function ManagerEvents() {
                 </div>
               </div>
 
-              {/* Attendees List */}
-              <div className="attendees-section">
-                <h4>Registered Attendees</h4>
-                {selectedEvent.guests && selectedEvent.guests.length > 0 ? (
-                  <div className="attendees-grid-view">
-                    {selectedEvent.guests.map((guest) => (
-                      <div key={guest.userId} className="attendee-card">
-                        <div className="attendee-avatar">
-                          <i className="fas fa-user-circle"></i>
-                        </div>
-                        <div className="attendee-details">
-                          <strong>{guest.user?.name || "Unknown"}</strong>
-                          <small>{guest.user?.utorid}</small>
-                          <span className="attendee-email">
-                            {guest.user?.email}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          className="btn-remove-attendee"
-                          onClick={() => handleRemoveGuest(guest.userId)}
-                          title="Remove Attendee"
-                        >
-                          <i className="fas fa-user-times"></i>
-                        </button>
+                    {/* Add Guest Form */}
+                    {!eventHasPassed && (
+                      <div className="add-guest-section">
+                        <h4>
+                          <i className="fas fa-user-plus" style={{ marginRight: "8px", color: "var(--color-brand-orange)" }}></i>
+                          Add Guest
+                        </h4>
+                        <form onSubmit={handleAddGuest} className="add-guest-form">
+                          <input
+                            type="text"
+                            placeholder="Enter UTORid (e.g., regularuser)"
+                            value={newGuestUtorid}
+                            onChange={(e) => setNewGuestUtorid(e.target.value)}
+                            disabled={addingGuest}
+                            className="guest-input"
+                          />
+                          <button
+                            type="submit"
+                            disabled={addingGuest || !newGuestUtorid.trim()}
+                            className="btn-add-guest"
+                          >
+                            {addingGuest ? (
+                              <>
+                                <i className="fas fa-spinner fa-spin"></i> Adding...
+                              </>
+                            ) : (
+                              <>
+                                <i className="fas fa-plus"></i> Add
+                              </>
+                            )}
+                          </button>
+                        </form>
+                        {guestSuccessMessage && (
+                          <div className="success-notification">
+                            <i className="fas fa-check-circle"></i>
+                            {guestSuccessMessage}
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="empty-message">
-                    No attendees have registered yet.
-                  </p>
-                )}
-              </div>
+                    )}
 
-              {/* Quick Actions */}
-              <div className="attendee-actions">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => {
-                    setShowAttendeesModal(false);
-                    handleManagePoints(selectedEvent);
-                  }}
-                  disabled={
-                    !selectedEvent.guests || selectedEvent.guests.length === 0
-                  }
-                >
-                  <i className="fas fa-award"></i> Award Points
-                </button>
-              </div>
+                    {/* Attendees List */}
+                    <div className="attendees-section">
+                      <h4>Registered Attendees</h4>
+                      {selectedEvent.guests && selectedEvent.guests.length > 0 ? (
+                        <div className="attendees-grid-view">
+                          {selectedEvent.guests.map((guest) => (
+                            <div key={guest.userId} className="attendee-card">
+                              <div className="attendee-avatar">
+                                <i className="fas fa-user-circle"></i>
+                              </div>
+                              <div className="attendee-details">
+                                <strong>{guest.user?.name || "Unknown"}</strong>
+                                <small>{guest.user?.utorid}</small>
+                                <span className="attendee-email">
+                                  {guest.user?.email}
+                                </span>
+                              </div>
+                              {!eventHasPassed && (
+                                <button
+                                  type="button"
+                                  className="btn-remove-attendee"
+                                  onClick={() => handleRemoveGuest(guest.userId)}
+                                  title="Remove Attendee"
+                                >
+                                  <i className="fas fa-user-times"></i>
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="empty-message">
+                          No attendees have registered yet.
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div className="attendee-actions">
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() => {
+                          closeAttendeesModal();
+                          handleManagePoints(selectedEvent);
+                        }}
+                        disabled={
+                          !selectedEvent.guests || selectedEvent.guests.length === 0
+                        }
+                      >
+                        <i className="fas fa-award"></i> Award Points
+                      </button>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
 
             <div className="modal-actions">
               <button
                 type="button"
                 className="btn-secondary"
-                onClick={() => setShowAttendeesModal(false)}
+                onClick={closeAttendeesModal}
               >
                 Close
               </button>

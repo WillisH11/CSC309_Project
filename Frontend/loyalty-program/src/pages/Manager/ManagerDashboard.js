@@ -48,34 +48,36 @@ export default function ManagerDashboard() {
         </p>
       </div>
 
-      {/* Event Attendance Analytics */}
-      {!loading && events.length > 0 && (
-        <div className="chart-card" style={{ marginBottom: "2rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-            <h2 style={{ margin: "0" }}>
-              <i className="fas fa-chart-bar" style={{ marginRight: "10px", color: "#FFA239" }}></i>
-              Event Attendance Analytics
-            </h2>
-            <div style={{ display: "flex", gap: "15px", fontSize: "11px", color: "#333", alignItems: "center" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                <span style={{ width: "12px", height: "12px", borderRadius: "50%", backgroundColor: "#8CE4FF", display: "inline-block" }}></span>
-                <span>Attending</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                <span style={{ width: "12px", height: "12px", borderRadius: "50%", backgroundColor: "rgba(200, 200, 200, 0.5)", display: "inline-block" }}></span>
-                <span>Available Spots</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                <span style={{ width: "12px", height: "12px", borderRadius: "50%", backgroundColor: "#FF5656", display: "inline-block" }}></span>
-                <span>Full (100%)</span>
+      {/* Combined grid with chart and buttons aligned */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "2rem", marginBottom: "2rem" }}>
+        {/* Event Attendance Analytics - spans 2 columns */}
+        {!loading && events.length > 0 && (
+          <div className="chart-card" style={{ gridColumn: "1 / -1" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+              <h2 style={{ margin: "0" }}>
+                <i className="fas fa-chart-bar" style={{ marginRight: "10px", color: "#FFA239" }}></i>
+                Event Attendance Analytics
+              </h2>
+              <div style={{ display: "flex", gap: "15px", fontSize: "11px", color: "#333", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                  <span style={{ width: "12px", height: "12px", borderRadius: "50%", backgroundColor: "#8CE4FF", display: "inline-block" }}></span>
+                  <span>Attending</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                  <span style={{ width: "12px", height: "12px", borderRadius: "50%", backgroundColor: "rgba(200, 200, 200, 0.5)", display: "inline-block" }}></span>
+                  <span>Available Spots</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                  <span style={{ width: "12px", height: "12px", borderRadius: "50%", backgroundColor: "#FF5656", display: "inline-block" }}></span>
+                  <span>Full (100%)</span>
+                </div>
               </div>
             </div>
+            <EventAttendanceChart events={events} />
           </div>
-          <EventAttendanceChart events={events} />
-        </div>
-      )}
+        )}
 
-      <div className="manager-dashboard-grid">
+        {/* Management buttons in the same grid */}
         <Link to="/manager/users" className="manager-card card-users">
           <div>
             <i className="fas fa-users-cog"></i>
@@ -116,8 +118,6 @@ export default function ManagerDashboard() {
             <p>Create promotional offers, edit rules, and publish campaigns.</p>
           </div>
         </Link>
-
-
       </div>
     </div>
   );

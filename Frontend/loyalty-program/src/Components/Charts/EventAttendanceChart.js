@@ -27,6 +27,10 @@ export default function EventAttendanceChart({ events }) {
     }
 
     // Sort events by attendance (highest first) and take top 8
+    console.log("EventAttendanceChart - Total events:", events.length);
+    console.log("EventAttendanceChart - Published events:", events.filter(e => e.published).length);
+    console.log("EventAttendanceChart - Unpublished events:", events.filter(e => !e.published).length);
+
     const sortedEvents = [...events]
       .filter((e) => e.published) // Only show published events
       .sort((a, b) => {
@@ -37,6 +41,7 @@ export default function EventAttendanceChart({ events }) {
       .slice(0, 8);
 
     if (sortedEvents.length === 0) {
+      console.log("No published events to display in chart");
       return null;
     }
 
@@ -169,7 +174,11 @@ export default function EventAttendanceChart({ events }) {
   }
 
   return (
-    <div style={{ height: "250px", position: "relative" }}>
+    <div style={{
+      height: "300px",
+      position: "relative",
+      width: "100%"
+    }}>
       <Bar data={chartData} options={options} />
     </div>
   );
