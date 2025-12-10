@@ -1,15 +1,11 @@
-/* ================================
-   PAGE WRAPPER
-================================ */
+/* PAGE WRAPPER */
 .manager-promo-page {
   max-width: 1100px;
   margin: 2rem auto;
   padding: 0 1.2rem;
 }
 
-/* ================================
-   TITLE
-================================ */
+/* TITLE */
 .manager-promo-page h1 {
   font-size: 2rem;
   font-weight: 800;
@@ -17,9 +13,7 @@
   color: var(--color-text-main);
 }
 
-/* ================================
-   ACTION BAR
-================================ */
+/* ACTION BAR */
 .promo-action-bar {
   display: flex;
   flex-direction: column;
@@ -63,9 +57,26 @@
   border-color: var(--color-brand-orange);
 }
 
-/* ================================
-   PROMOTION CARDS GRID
-================================ */
+/* EMPTY STATE & ERROR MESSAGES */
+.promo-empty,
+.promo-error {
+  text-align: center;
+  padding: 2rem;
+  color: #777;
+  font-size: 1.1rem;
+  font-style: italic;
+  margin: 2rem 0;
+}
+
+.promo-error {
+  color: #e74c3c;
+  background: #fee;
+  border-radius: 8px;
+  border: 1px solid #fcc;
+  font-style: normal;
+}
+
+/* PROMOTION CARDS GRID */
 .manager-promo-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
@@ -192,9 +203,7 @@
   transform: translateY(-2px);
 }
 
-/* ================================
-   PAGINATION
-================================ */
+/* PAGINATION */
 .promo-pagination {
   margin-top: 2rem;
   display: flex;
@@ -226,9 +235,7 @@
 
 
 
-/* ================================
-   PROMOTION MODAL OVERLAY
-================================ */
+/* PROMOTION MODAL OVERLAY */
 .promo-modal-overlay {
   position: fixed;
   inset: 0;
@@ -248,9 +255,7 @@
   to   { opacity: 1; }
 }
 
-/* ================================
-   MODAL CONTAINER
-================================ */
+/* MODAL CONTAINER */
 .promo-modal-content {
   width: 620px;
   max-width: 95%;
@@ -276,9 +281,7 @@
   }
 }
 
-/* ================================
-   HEADER
-================================ */
+/* HEADER */
 .promo-modal-header {
   padding: 1.6rem 2rem;
   background: linear-gradient(#fafafa, #f4f4f4);
@@ -321,9 +324,7 @@
   transform: scale(1.15);
 }
 
-/* ================================
-   BODY
-================================ */
+/* BODY */
 .promo-modal-body {
   padding: 2rem;
   max-height: 70vh;
@@ -339,9 +340,7 @@
   border-radius: 10px;
 }
 
-/* ================================
-   FORM
-================================ */
+/* FORM */
 .promo-form-group {
   margin-bottom: 1.5rem;
 }
@@ -402,9 +401,7 @@
   }
 }
 
-/* ================================
-   FOOTER
-================================ */
+/* FOOTER */
 .promo-modal-actions {
   padding: 1.5rem 2rem;
   background: #fafafa;
@@ -415,9 +412,7 @@
   gap: 1rem;
 }
 
-/* ================================
-   BUTTONS
-================================ */
+/* BUTTONS */
 .promo-btn-primary {
   background: var(--color-brand-orange);
   color: white;

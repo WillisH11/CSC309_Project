@@ -1,27 +1,27 @@
 import React, { useEffect, useState } from "react";
 import api from "../../services/api";
+import { useAuth } from "../../Contexts/AuthContext";
 import "./ManagerPromotions.css";
 
-function promoisExpired(promo) {
-  if (!promo?.endTime) return false;
-  return new Date(promo.endTime) < new Date();
+/* ---------- Helpers ---------- */
+function promoIsExpired(promo) {
+  return promo?.endTime && new Date(promo.endTime) < new Date();
 }
 
-function promohasStarted(promo) {
-  if (!promo?.startTime) return false;
-  return new Date(promo.startTime) <= new Date();
+function promoHasStarted(promo) {
+  return promo?.startTime && new Date(promo.startTime) <= new Date();
 }
-
-
-
 
 export default function ManagerPromotions() {
+  const { activeRole } = useAuth();
+  const isRegularView = activeRole === "regular";
+  
   const [promotions, setPromotions] = useState([]);
   const [count, setCount] = useState(0);
 
   const [name, setName] = useState("");
   const [type, setType] = useState("");
-  const [status, setStatus] = useState(""); // NEW unified filter
+  const [status, setStatus] = useState("");
 
   const [page, setPage] = useState(1);
   const limit = 10;
@@ -29,62 +29,71 @@ export default function ManagerPromotions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Modal states (create & edit)
+  /* ---------- Modal State ---------- */
   const [showCreate, setShowCreate] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [editId, setEditId] = useState(null);
 
-  // Form fields
+  /* ---------- Form Fields ---------- */
   const [newName, setNewName] = useState("");
   const [description, setDescription] = useState("");
   const [newType, setNewType] = useState("automatic");
-  const [rate, setRate] = useState("");
+  const [rate, setRate] = useState(""); 
   const [points, setPoints] = useState("");
   const [minSpending, setMinSpending] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [targetRole, setTargetRole] = useState("all");
 
   const [errors, setErrors] = useState({});
   const [hasStarted, setHasStarted] = useState(false);
 
+  /* ---------- Load Promotions ---------- */
   useEffect(() => {
     loadPromotions();
-  }, [page, name, type, status]);
+  }, [page, name, type, status, activeRole]);
+
+  /* ---------- Reset page when filters change ---------- */
+  useEffect(() => {
+    setPage(1);
+  }, [name, type, status]);
 
   async function loadPromotions() {
     try {
       setLoading(true);
-      setError("");
 
       const params = new URLSearchParams();
       params.append("limit", limit);
       params.append("page", page);
 
-      if (name) params.append("name", name);
-      if (type) params.append("type", type);
-
-      // ⭐ STATUS FILTER → backend safe logic
-      if (status === "upcoming") {
-        params.append("started", "false");
+      // If in regular view, send viewMode=regular to only get active promotions
+      if (isRegularView) {
+        params.append("viewMode", "regular");
+        // In regular view, only show active promotions (filter out past ones)
+        // But still allow name and type filters
+        if (name) params.append("name", name);
+        if (type) params.append("type", type);
+      } else {
+        // Manager view: allow all filters
+        if (name) params.append("name", name);
+        if (type) params.append("type", type);
+        if (status === "upcoming") params.append("started", "false");
+        if (status === "active") params.append("started", "true");
+        if (status === "ended") params.append("ended", "true");
       }
 
-      if (status === "active") {
-        // Backend-safe: only send started=true
-        params.append("started", "true");
-      }
-
-      if (status === "ended") {
-        params.append("ended", "true");
-      }
-
-      const res = await api.get(`/promotions?${params.toString()}`);
+      const res = await api.get(`/promotions?${params}`);
 
       let results = res.results || [];
 
-      // ⭐ Client-side filtering for ACTIVE (remove ended)
-      if (status === "active") {
+      // Additional client-side filtering for active status in regular view
+      if (isRegularView || status === "active") {
         const now = new Date();
-        results = results.filter(p => new Date(p.endTime) >= now);
+        results = results.filter((p) => {
+          const endTime = new Date(p.endTime);
+          const startTime = new Date(p.startTime || 0);
+          return startTime <= now && endTime >= now;
+        });
       }
 
       setPromotions(results);
@@ -97,51 +106,50 @@ export default function ManagerPromotions() {
     }
   }
 
-  async function deletePromotion(id) {
-    if (!window.confirm("Delete this promotion?")) return;
-    try {
-      await api.delete(`/promotions/${id}`);
-      loadPromotions();
-    } catch (err) {
-      alert(err.error || "Failed to delete promotion");
-    }
-  }
-
-  // =========================
-  // VALIDATION
-  // =========================
+  /* ---------- Validation ---------- */
   function validateForm() {
-    const newErrors = {};
+    const e = {};
 
-    if (!newName.trim()) newErrors.name = "Name required.";
-    if (!description.trim()) newErrors.description = "Description required.";
+    if (!newName.trim()) e.name = "Name required.";
+    if (!description.trim()) e.description = "Description required.";
 
-    if (!startTime) newErrors.startTime = "Start time required.";
-    if (!endTime) newErrors.endTime = "End time required.";
+    if (!startTime && !hasStarted) e.startTime = "Start time required.";
+    if (!endTime) e.endTime = "End time required.";
 
-    if (startTime && endTime) {
+    if (!hasStarted && startTime && endTime) {
       if (new Date(endTime) <= new Date(startTime)) {
-        newErrors.endTime = "End must be after start.";
+        e.endTime = "End must be after start.";
       }
     }
 
     if (newType === "automatic") {
-      if (!rate || Number(rate) <= 0) newErrors.rate = "Rate must be > 0";
+      if (!rate || Number(rate) <= 0) e.rate = "Rate (%) must be > 0.";
     }
 
     if (newType === "one-time") {
-      if (!points || Number(points) <= 0) newErrors.points = "Points must be > 0";
+      if (!points || Number(points) <= 0) e.points = "Points must be > 0.";
       if (!minSpending || Number(minSpending) <= 0)
-        newErrors.minSpending = "Min spending required.";
+        e.minSpending = "Min spending required.";
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(e);
+    return Object.keys(e).length === 0;
   }
 
   useEffect(() => {
     validateForm();
-  }, [newName, description, startTime, endTime, rate, points, minSpending, newType]);
+  }, [
+    newName,
+    description,
+    rate,
+    points,
+    minSpending,
+    startTime,
+    endTime,
+    newType,
+    hasStarted
+  ]);
+
 
   function resetForm() {
     setNewName("");
@@ -152,14 +160,13 @@ export default function ManagerPromotions() {
     setMinSpending("");
     setStartTime("");
     setEndTime("");
-    setErrors({});
+    setTargetRole("all");
     setShowCreate(false);
     setShowEdit(false);
+    setErrors({});
   }
 
-  // =========================
-  // CREATE PROMOTION
-  // =========================
+  /* ---------- Create Promotion ---------- */
   async function handleCreatePromotion() {
     if (!validateForm()) return alert("Fix validation errors.");
 
@@ -170,9 +177,10 @@ export default function ManagerPromotions() {
         type: newType,
         startTime,
         endTime,
-        rate: newType === "automatic" ? Number(rate) : undefined,
+        rate: newType === "automatic" ? Number(rate) / 100 : undefined,
         points: newType === "one-time" ? Number(points) : undefined,
-        minSpending: minSpending ? Number(minSpending) : null
+        minSpending: minSpending ? Number(minSpending) : null,
+        targetRole: targetRole
       });
 
       alert("Promotion created!");
@@ -184,54 +192,41 @@ export default function ManagerPromotions() {
     }
   }
 
-  // OPEN EDIT MODAL
-  function toInputDateTime(value) {
-    if (!value) return "";
-    const date = new Date(value);
-
+  /* ---------- Edit Promotion ---------- */
+  function toInputDateTime(val) {
+    if (!val) return "";
+    const d = new Date(val);
     const pad = (n) => String(n).padStart(2, "0");
-
-    return (
-      date.getFullYear() +
-      "-" +
-      pad(date.getMonth() + 1) +
-      "-" +
-      pad(date.getDate()) +
-      "T" +
-      pad(date.getHours()) +
-      ":" +
-      pad(date.getMinutes())
-    );
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(
+      d.getDate()
+    )}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
-  function openEditModal(promo) {
-    setEditId(promo.id);
+  function openEditModal(p) {
+    setEditId(p.id);
 
-    setNewName(promo.name ?? "");
-    setDescription(promo.description ?? "");
-    setNewType(promo.type ?? "automatic");
+    setNewName(p.name);
+    setDescription(p.description);
+    setNewType(p.type);
 
-    setStartTime(toInputDateTime(promo.startTime));
-    setEndTime(toInputDateTime(promo.endTime));
+    setStartTime(toInputDateTime(p.startTime));
+    setEndTime(toInputDateTime(p.endTime));
 
-    setRate(promo.rate ?? "");
-    setPoints(promo.points ?? "");
-    setMinSpending(promo.minSpending ?? "");
+    setRate(p.rate ? p.rate * 100 : "");
+    setPoints(p.points ?? "");
+    setMinSpending(p.minSpending ?? "");
+    setTargetRole(p.targetRole || "all");
 
-    setHasStarted(promohasStarted(promo));
+    const started = promoHasStarted(p);
+    setHasStarted(started);
 
-    setErrors({});
     setShowEdit(true);
   }
 
-
-  // =========================
-  // EDIT PROMOTION
-  // =========================
   async function handleEditPromotion() {
     if (!validateForm()) return;
 
-    let body = {};
+    let body;
 
     if (hasStarted) {
       body = { endTime };
@@ -242,9 +237,10 @@ export default function ManagerPromotions() {
         type: newType,
         startTime,
         endTime,
-        rate: newType === "automatic" ? Number(rate) : undefined,
+        rate: newType === "automatic" ? Number(rate) / 100 : undefined,
         points: newType === "one-time" ? Number(points) : undefined,
-        minSpending: minSpending ? Number(minSpending) : null
+        minSpending: minSpending ? Number(minSpending) : null,
+        targetRole: targetRole
       };
     }
 
@@ -255,98 +251,187 @@ export default function ManagerPromotions() {
       loadPromotions();
     } catch (err) {
       console.error(err);
-      alert(err.error || "Failed to update promotion");
+      alert(err.error || "Failed to update promotion.");
     }
   }
 
+  /* ---------- Delete Promotion ---------- */
+  async function deletePromotion(id) {
+    if (!window.confirm("Delete this promotion?")) return;
+    try {
+      await api.delete(`/promotions/${id}`);
+      loadPromotions();
+    } catch (err) {
+      alert(err.error || "Failed to delete promotion.");
+    }
+  }
+
+  /* ---------- Render ---------- */
   return (
     <div className="manager-promo-page">
-
       <h1>Promotion Management</h1>
+      {isRegularView && (
+        <p style={{ color: "#666", fontStyle: "italic", marginBottom: "1rem" }}>
+          Regular View: Only active promotions are shown. Editing is disabled.
+        </p>
+      )}
 
-      {/* ========================= */}
-      {/* FILTER BAR */}
-      {/* ========================= */}
+      {/* Filters */}
       <div className="promo-action-bar">
         <input
           className="promo-search"
-          placeholder="Search…"
+          placeholder="Search promotions by name..."
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
 
         <div className="promo-filters-row">
-          <select value={type} onChange={(e) => setType(e.target.value)}>
+          <select 
+            value={type} 
+            onChange={(e) => setType(e.target.value)}
+            disabled={isRegularView}
+          >
             <option value="">All Types</option>
             <option value="automatic">Automatic</option>
             <option value="one-time">One-Time</option>
           </select>
 
-          {/* ⭐ UNIFIED STATUS FILTER */}
-          <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="">All Status</option>
-            <option value="upcoming">Upcoming</option>
-            <option value="active">Active</option>
-            <option value="ended">Ended</option>
-          </select>
+          {!isRegularView && (
+            <select value={status} onChange={(e) => setStatus(e.target.value)}>
+              <option value="">All Status</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="active">Active</option>
+              <option value="ended">Ended</option>
+            </select>
+          )}
 
-          <button className="btn-primary" onClick={() => setShowCreate(true)}>
-            + Create Promotion
-          </button>
+          {!isRegularView && (
+            <button className="btn-primary" onClick={() => setShowCreate(true)}>
+              + Create Promotion
+            </button>
+          )}
         </div>
       </div>
 
-      {/* ========================= */}
-      {/* LIST */}
-      {/* ========================= */}
+      {/* Promotion Cards */}
+      {loading && <p>Loading promotions...</p>}
+      {error && <p className="promo-error">{error}</p>}
+      {!loading && !error && promotions.length === 0 && (
+        <p className="promo-empty">No such promotion found.</p>
+      )}
       <div className="manager-promo-list">
         {promotions.map((p) => (
           <div key={p.id} className="promo-card">
             <div className="promo-card-header">
-              <h3 className="promo-title">
-                {p.name || "(Untitled Promotion)"}
-              </h3>
+              <h3 className="promo-title">{p.name}</h3>
 
               <div className="promo-badge-group">
                 <span className={`promo-badge ${p.type}`}>
                   {p.type === "automatic" ? "AUTO" : "ONE-TIME"}
                 </span>
 
-                {promoisExpired(p) && (
+                {promoIsExpired(p) && (
                   <span className="promo-badge expired">EXPIRED</span>
                 )}
               </div>
             </div>
+
             <div className="promo-card-body">
               <p><strong>Description:</strong> {p.description}</p>
               <p><strong>Ends:</strong> {new Date(p.endTime).toLocaleString()}</p>
 
               {p.type === "automatic" && (
-                <p><strong>Rate:</strong> {p.rate}%<br /> <strong>Min:</strong> ${p.minSpending ?? 0}</p>
+                <p>
+                  <strong>Rate:</strong> {p.rate * 100}%<br />
+                  <strong>Min:</strong> ${p.minSpending ?? 0}
+                </p>
               )}
 
               {p.type === "one-time" && (
-                <p><strong>Points:</strong> {p.points}<br /> <strong>Min:</strong> ${p.minSpending}</p>
+                <p>
+                  <strong>Points:</strong> {p.points}<br />
+                  <strong>Min:</strong> ${p.minSpending}
+                </p>
               )}
             </div>
 
-            <div className="promo-card-footer">
-              <button
-              className={`promo-btn edit ${promoisExpired(p) ? "disabled" : ""}`}
-              disabled={promoisExpired(p)}
-              onClick={() => !promoisExpired(p) && openEditModal(p)}
-              >
-                Edit
-              </button>
-              <button className="promo-btn delete" onClick={() => deletePromotion(p.id)}>Delete</button>
-            </div>
+            {!isRegularView && (
+              <div className="promo-card-footer">
+                <button
+                  disabled={promoIsExpired(p)}
+                  className={`promo-btn edit ${promoIsExpired(p) ? "disabled" : ""}`}
+                  onClick={() => openEditModal(p)}
+                >
+                  Edit
+                </button>
+
+                <button
+                  className="promo-btn delete"
+                  onClick={() => deletePromotion(p.id)}
+                >
+                  Delete
+                </button>
+              </div>
+            )}
           </div>
         ))}
       </div>
 
-      {/* ========================= */}
-      {/* CREATE MODAL */}
-      {/* ========================= */}
+      {/* Pagination */}
+      {count > limit && (
+        <div className="pagination" style={{ 
+          display: "flex", 
+          justifyContent: "center", 
+          alignItems: "center", 
+          gap: "1rem", 
+          marginTop: "2rem",
+          padding: "1rem"
+        }}>
+          <button
+            type="button"
+            className="pagination-btn"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            style={{
+              padding: "0.5rem 1rem",
+              borderRadius: "8px",
+              border: "2px solid var(--color-border)",
+              background: page === 1 ? "#f0f0f0" : "white",
+              cursor: page === 1 ? "not-allowed" : "pointer",
+              color: page === 1 ? "#999" : "inherit"
+            }}
+          >
+            <i className="fas fa-chevron-left"></i> Previous
+          </button>
+
+          <div className="pagination-info" style={{ 
+            minWidth: "120px", 
+            textAlign: "center",
+            fontWeight: 600
+          }}>
+            Page {page} of {Math.ceil(count / limit)}
+          </div>
+
+          <button
+            type="button"
+            className="pagination-btn"
+            onClick={() => setPage((p) => Math.min(Math.ceil(count / limit), p + 1))}
+            disabled={page >= Math.ceil(count / limit)}
+            style={{
+              padding: "0.5rem 1rem",
+              borderRadius: "8px",
+              border: "2px solid var(--color-border)",
+              background: page >= Math.ceil(count / limit) ? "#f0f0f0" : "white",
+              cursor: page >= Math.ceil(count / limit) ? "not-allowed" : "pointer",
+              color: page >= Math.ceil(count / limit) ? "#999" : "inherit"
+            }}
+          >
+            Next <i className="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      )}
+
+      {/* Create Modal */}
       {showCreate && (
         <PromoModal
           title="Create Promotion"
@@ -359,6 +444,7 @@ export default function ManagerPromotions() {
           rate={rate}
           points={points}
           minSpending={minSpending}
+          targetRole={targetRole}
           setNewName={setNewName}
           setDescription={setDescription}
           setNewType={setNewType}
@@ -367,16 +453,14 @@ export default function ManagerPromotions() {
           setRate={setRate}
           setPoints={setPoints}
           setMinSpending={setMinSpending}
-          validateForm={validateForm}
+          setTargetRole={setTargetRole}
           onSave={handleCreatePromotion}
           onCancel={resetForm}
           hasStarted={false}
         />
       )}
 
-      {/* ========================= */}
-      {/* EDIT MODAL */}
-      {/* ========================= */}
+      {/* Edit Modal */}
       {showEdit && (
         <PromoModal
           title="Edit Promotion"
@@ -389,6 +473,7 @@ export default function ManagerPromotions() {
           rate={rate}
           points={points}
           minSpending={minSpending}
+          targetRole={targetRole}
           setNewName={setNewName}
           setDescription={setDescription}
           setNewType={setNewType}
@@ -397,28 +482,43 @@ export default function ManagerPromotions() {
           setRate={setRate}
           setPoints={setPoints}
           setMinSpending={setMinSpending}
-          validateForm={validateForm}
+          setTargetRole={setTargetRole}
           onSave={handleEditPromotion}
           onCancel={resetForm}
           hasStarted={hasStarted}
         />
       )}
-
     </div>
   );
 }
 
-/* ====================================
-   SHARED MODAL COMPONENT
-===================================== */
+/* ---------- Shared Modal Component ---------- */
 
 function PromoModal({
-  title, errors, newName, description, newType, startTime, endTime,
-  rate, points, minSpending, setNewName, setDescription, setNewType,
-  setStartTime, setEndTime, setRate, setPoints, setMinSpending,
-  validateForm, onSave, onCancel, hasStarted
+  title,
+  errors,
+  newName,
+  description,
+  newType,
+  startTime,
+  endTime,
+  rate,
+  points,
+  minSpending,
+  targetRole,
+  setNewName,
+  setDescription,
+  setNewType,
+  setStartTime,
+  setEndTime,
+  setRate,
+  setPoints,
+  setMinSpending,
+  setTargetRole,
+  onSave,
+  onCancel,
+  hasStarted
 }) {
-
   return (
     <div className="promo-modal-overlay">
       <div className="promo-modal-content">
@@ -431,7 +531,7 @@ function PromoModal({
         <div className="promo-modal-body">
           <form className="promo-form">
 
-            {/* BASIC */}
+            {/* Basic Fields */}
             {!hasStarted && (
               <>
                 <div className="promo-form-group">
@@ -450,7 +550,7 @@ function PromoModal({
                     className={`promo-textarea ${errors.description ? "invalid" : ""}`}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                  />
+                  ></textarea>
                   {errors.description && <p className="promo-error-msg">{errors.description}</p>}
                 </div>
 
@@ -465,19 +565,32 @@ function PromoModal({
                     <option value="one-time">One-Time</option>
                   </select>
                 </div>
+
+                <div className="promo-form-group">
+                  <label>Target Users *</label>
+                  <select
+                    className="promo-input"
+                    value={targetRole}
+                    onChange={(e) => setTargetRole(e.target.value)}
+                  >
+                    <option value="all">All Users</option>
+                    <option value="cashier">Cashier+ (Cashier, Manager, Superuser)</option>
+                    <option value="manager">Manager+ (Manager, Superuser)</option>
+                  </select>
+                </div>
               </>
             )}
 
-            {/* DATE TIME */}
+            {/* Times */}
             <div className="promo-grid-2">
               {!hasStarted && (
                 <div className="promo-form-group">
                   <label>Start Time *</label>
                   <input
                     type="datetime-local"
-                    className={`promo-input ${errors.startTime ? "invalid" : ""}`}
                     value={startTime}
                     onChange={(e) => setStartTime(e.target.value)}
+                    className={`promo-input ${errors.startTime ? "invalid" : ""}`}
                   />
                   {errors.startTime && <p className="promo-error-msg">{errors.startTime}</p>}
                 </div>
@@ -487,76 +600,78 @@ function PromoModal({
                 <label>End Time *</label>
                 <input
                   type="datetime-local"
-                  className={`promo-input ${errors.endTime ? "invalid" : ""}`}
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
+                  className={`promo-input ${errors.endTime ? "invalid" : ""}`}
                 />
                 {errors.endTime && <p className="promo-error-msg">{errors.endTime}</p>}
               </div>
             </div>
 
-            {/* SETTINGS */}
-            {!hasStarted && (
-              <>
-                {newType === "automatic" && (
-                  <div className="promo-grid-2">
-                    <div className="promo-form-group">
-                      <label>Rate (%) *</label>
-                      <input
-                        type="number"
-                        className={`promo-input ${errors.rate ? "invalid" : ""}`}
-                        value={rate}
-                        onChange={(e) => setRate(e.target.value)}
-                      />
-                      {errors.rate && <p className="promo-error-msg">{errors.rate}</p>}
-                    </div>
+            {/* Automatic Settings */}
+            {!hasStarted && newType === "automatic" && (
+              <div className="promo-grid-2">
+                <div className="promo-form-group">
+                  <label>Rate (%) *</label>
+                  <input
+                    type="number"
+                    value={rate}
+                    onChange={(e) => setRate(e.target.value)}
+                    className={`promo-input ${errors.rate ? "invalid" : ""}`}
+                  />
+                  {errors.rate && <p className="promo-error-msg">{errors.rate}</p>}
+                </div>
 
-                    <div className="promo-form-group">
-                      <label>Min Spending</label>
-                      <input
-                        type="number"
-                        className="promo-input"
-                        value={minSpending}
-                        onChange={(e) => setMinSpending(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {newType === "one-time" && (
-                  <div className="promo-grid-2">
-                    <div className="promo-form-group">
-                      <label>Points *</label>
-                      <input
-                        type="number"
-                        className={`promo-input ${errors.points ? "invalid" : ""}`}
-                        value={points}
-                        onChange={(e) => setPoints(e.target.value)}
-                      />
-                      {errors.points && <p className="promo-error-msg">{errors.points}</p>}
-                    </div>
-
-                    <div className="promo-form-group">
-                      <label>Min Spending *</label>
-                      <input
-                        type="number"
-                        className={`promo-input ${errors.minSpending ? "invalid" : ""}`}
-                        value={minSpending}
-                        onChange={(e) => setMinSpending(e.target.value)}
-                      />
-                      {errors.minSpending && <p className="promo-error-msg">{errors.minSpending}</p>}
-                    </div>
-                  </div>
-                )}
-              </>
+                <div className="promo-form-group">
+                  <label>Min Spending</label>
+                  <input
+                    type="number"
+                    value={minSpending}
+                    onChange={(e) => setMinSpending(e.target.value)}
+                    className="promo-input"
+                  />
+                </div>
+              </div>
             )}
 
+            {/* One Time Settings */}
+            {!hasStarted && newType === "one-time" && (
+              <div className="promo-grid-2">
+                <div className="promo-form-group">
+                  <label>Points *</label>
+                  <input
+                    type="number"
+                    value={points}
+                    onChange={(e) => setPoints(e.target.value)}
+                    className={`promo-input ${errors.points ? "invalid" : ""}`}
+                  />
+                  {errors.points && <p className="promo-error-msg">{errors.points}</p>}
+                </div>
+
+                <div className="promo-form-group">
+                  <label>Min Spending *</label>
+                  <input
+                    type="number"
+                    value={minSpending}
+                    onChange={(e) => setMinSpending(e.target.value)}
+                    className={`promo-input ${errors.minSpending ? "invalid" : ""}`}
+                  />
+                  {errors.minSpending && (
+                    <p className="promo-error-msg">{errors.minSpending}</p>
+                  )}
+                </div>
+              </div>
+            )}
           </form>
         </div>
 
         <div className="promo-modal-actions">
-          <button className="promo-btn-secondary" onClick={onCancel}>Cancel</button>
-          <button className="promo-btn-primary" onClick={onSave}>Save</button>
+          <button className="promo-btn-secondary" onClick={onCancel}>
+            Cancel
+          </button>
+          <button className="promo-btn-primary" onClick={onSave}>
+            Save
+          </button>
         </div>
 
       </div>
