@@ -1,5 +1,10 @@
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3002";
 
+function getCookie(name) {
+  const match = document.cookie.match(new RegExp("(^| )" + name + "=([^;]+)"));
+  return match ? decodeURIComponent(match[2]) : null;
+}
+
 class ApiService {
   constructor() {
     this.baseURL = API_URL;
@@ -25,12 +30,16 @@ class ApiService {
     const url = `${this.baseURL}${endpoint}`;
     const token = this.getToken();
 
+    const csrfToken = getCookie("csrfToken");
+
     const config = {
       ...options,
       headers: {
         "Content-Type": "application/json",
+        ...(csrfToken ? { "x-csrf-token": csrfToken } : {}),
         ...options.headers,
       },
+      credentials: "include",
     };
 
     // Add Authorization header if token exists
@@ -169,4 +178,5 @@ class ApiService {
   }
 }
 
-export default new ApiService();
+const apiService = new ApiService();
+export default apiService;

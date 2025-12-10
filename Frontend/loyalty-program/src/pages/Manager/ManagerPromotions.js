@@ -73,6 +73,7 @@ export default function ManagerPromotions() {
   /* ---------- Load Promotions ---------- */
   useEffect(() => {
     loadPromotions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, name, type, status, activeRole]);
 
   /* ---------- Reset page when filters change ---------- */
@@ -160,6 +161,7 @@ export default function ManagerPromotions() {
 
   useEffect(() => {
     validateForm();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     newName,
     description,
