@@ -10,6 +10,7 @@ export default function UserDashboard() {
   const { user, refreshUser } = useAuth();
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [allTransactions, setAllTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -18,12 +19,14 @@ export default function UserDashboard() {
       try {
         // Refresh user data to get latest points
         await refreshUser();
-        
-        // Load transactions
-        const tx = await api.get("/users/me/transactions?limit=5&page=1");
-        if (isMounted) {
-          setRecentTransactions(tx.results || []);
-        }
+        const [recent, all] = await Promise.all([
+          api.get("/users/me/transactions?limit=5&page=1"),
+          api.get("/users/me/transactions?limit=100&page=1"),
+        ]);
+
+        if (!isMounted) return;
+        setRecentTransactions(recent.results || []);
+        setAllTransactions(all.results || []);
       } catch (err) {
         console.error("Dashboard load error:", err);
       } finally {
@@ -48,18 +51,6 @@ export default function UserDashboard() {
       </div>
     );
   }
-    // Fetch recent transactions for activity list
-    api
-      .get("/users/me/transactions?limit=5&page=1")
-      .then((data) => setRecentTransactions(data.results || []))
-      .catch((err) => console.error(err));
-
-    // Fetch more transactions for charts (last 30 days worth)
-    api
-      .get("/users/me/transactions?limit=100&page=1")
-      .then((data) => setAllTransactions(data.results || []))
-      .catch((err) => console.error(err));
-  }, []);
 
   return (
     <div className="dashboard-container">
