@@ -7,7 +7,6 @@ export default function CashierCreate() {
   const [amount, setAmount] = useState("");
   const [remark, setRemark] = useState("");
 
-  const [promotions, setPromotions] = useState([]);
   const [autoPromos, setAutoPromos] = useState([]);
   const [oneTimePromos, setOneTimePromos] = useState([]);
 
@@ -38,13 +37,14 @@ export default function CashierCreate() {
       const res = await api.get("/promotions", params);
       const list = res.results || [];
 
-      setPromotions(list);
       setAutoPromos(list.filter((p) => p.type === "automatic"));
       setOneTimePromos(list.filter((p) => p.type === "one-time"));
       
       // Clear selected one-time promo if it's no longer available
       if (selectedOneTime) {
-        const stillAvailable = list.some((p) => p.id == selectedOneTime && p.type === "one-time");
+        const stillAvailable = list.some(
+          (p) => Number(p.id) === Number(selectedOneTime) && p.type === "one-time"
+        );
         if (!stillAvailable) {
           setSelectedOneTime("");
           setOneTimeBonus(0);
@@ -95,7 +95,7 @@ export default function CashierCreate() {
     setAutoBonus(bestBonus);
 
     // ---------- One-time promo ----------
-    const ot = oneTimePromos.find((p) => p.id == selectedOneTime);
+    const ot = oneTimePromos.find((p) => Number(p.id) === Number(selectedOneTime));
 
     if (ot && spent >= ot.minSpending) {
       setOneTimeBonus(ot.points);
@@ -115,7 +115,7 @@ export default function CashierCreate() {
       return;
     }
 
-    const promo = oneTimePromos.find((p) => p.id == id);
+    const promo = oneTimePromos.find((p) => Number(p.id) === Number(id));
 
     if (promo && spent >= promo.minSpending) {
       setOneTimeBonus(promo.points);
@@ -139,7 +139,7 @@ export default function CashierCreate() {
 
     // Add selected one-time promo (validate min spending before submit)
     if (selectedOneTime) {
-      const ot = oneTimePromos.find((p) => p.id == selectedOneTime);
+      const ot = oneTimePromos.find((p) => Number(p.id) === Number(selectedOneTime));
       if (ot) {
         if (Number(amount) < ot.minSpending) {
           setOneTimeError(

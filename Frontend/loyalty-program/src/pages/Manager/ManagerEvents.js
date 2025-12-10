@@ -800,7 +800,11 @@ export default function ManagerEvents() {
                           <button
                             type="button"
                             className="btn-icon btn-view"
-                            onClick={() => navigate(`/events/${event.id}`)}
+                            onClick={() =>
+                              navigate(`/events/${event.id}`, {
+                                state: { backTo: "/manager/events" },
+                              })
+                            }
                             title="View"
                           >
                             <i className="fas fa-eye"></i>

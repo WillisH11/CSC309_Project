@@ -22,6 +22,7 @@ const express = require("express");
 const cors = require("cors");
 const { expressjwt: expressjwt } = require("express-jwt");
 const { PrismaClient } = require("@prisma/client");
+const cookieParser = require("cookie-parser");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
@@ -46,12 +47,56 @@ if (!JWT_SECRET) {
     process.exit(1);
 }
 
+const isProd = process.env.NODE_ENV === 'production';
+
+// CSRF helpers (double-submit cookie)
+const generateCsrfToken = () => uuidv4();
+
+function attachCsrfToken(req, res, next) {
+    let csrfToken = req.cookies.csrfToken;
+    if (!csrfToken) {
+        csrfToken = generateCsrfToken();
+        res.cookie('csrfToken', csrfToken, {
+            httpOnly: false,
+            sameSite: 'lax',
+            secure: isProd,
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+    }
+    res.locals.csrfToken = csrfToken;
+    next();
+}
+
+function verifyCsrf(req, res, next) {
+    const safe = ['GET', 'HEAD', 'OPTIONS'];
+    if (safe.includes(req.method)) return next();
+    if (req.path.startsWith('/auth/')) return next(); // skip auth endpoints
+    const cookieToken = req.cookies.csrfToken;
+    const headerToken = req.headers['x-csrf-token'];
+    if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+        return res.status(403).json({ error: "Forbidden (CSRF token mismatch)" });
+    }
+    next();
+}
+
+function populateAuthFromCookie(req, res, next) {
+    if (!req.headers.authorization && req.cookies.jwt_token) {
+        req.headers.authorization = `Bearer ${req.cookies.jwt_token}`;
+    }
+    next();
+}
+
 // Middleware
 app.use(cors({
-    origin: 'http://localhost:3001',
+    origin: ['http://localhost:3001', 'http://localhost:3000'],
     credentials: true
 }));
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(populateAuthFromCookie);
+app.use(attachCsrfToken);
+app.use(verifyCsrf);
 
 // JWT Authentication Middleware 
 const jwtMiddleware = expressjwt({
@@ -129,13 +174,24 @@ app.post('/auth/tokens', async (req, res) => {
             { expiresIn: '7d' }
         );
 
+        // Set httpOnly cookie for JWT
+        res.cookie('jwt_token', token, {
+            httpOnly: true,
+            sameSite: 'lax',
+            secure: isProd,
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
         // Update lastLogin
         await prisma.user.update({
             where: { id: user.id },
             data: { lastLogin: new Date() }
         });
 
-        res.json({ token, expiresAt: expiresAt.toISOString() });
+        // Ensure CSRF token cookie exists (attachCsrfToken runs globally)
+        const csrfToken = res.locals.csrfToken || req.cookies.csrfToken;
+
+        res.json({ token, expiresAt: expiresAt.toISOString(), csrfToken });
 
     } catch (error) {
         console.error(error);

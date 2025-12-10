@@ -62,17 +62,17 @@
 .promo-error {
   text-align: center;
   padding: 2rem;
-  color: #777;
+  color: var(--color-text-muted);
   font-size: 1.1rem;
   font-style: italic;
   margin: 2rem 0;
 }
 
 .promo-error {
-  color: #e74c3c;
-  background: #fee;
+  color: var(--color-brand-red);
+  background: rgba(255, 86, 86, 0.08);
   border-radius: 8px;
-  border: 1px solid #fcc;
+  border: 1px solid rgba(255, 86, 86, 0.4);
   font-style: normal;
 }
 
@@ -112,7 +112,7 @@
 }
 
 .promo-title {
-  color: #222 !important;
+  color: var(--color-text-main) !important;
   font-size: 1.25rem;
   font-weight: 800;
   margin: 0;
@@ -131,19 +131,19 @@
 
 /* Badge styles */
 .promo-badge.automatic {
-  background: #e3f4ff;
-  color: #0a76c4;
-  border: 1px solid #96d0ff;
+  background: rgba(140, 228, 255, 0.18);
+  color: var(--color-brand-blue);
+  border: 1px solid rgba(140, 228, 255, 0.6);
 }
 
 .promo-badge.one-time {
-  background: #fff1d6;
-  color: #c47a00;
-  border: 1px solid #ffcf81;
+  background: rgba(254, 238, 145, 0.25);
+  color: var(--color-brand-orange);
+  border: 1px solid rgba(255, 162, 57, 0.5);
 }
 
 .promo-badge.expired {
-  background: #999;
+  background: var(--color-text-muted);
   color: white;
   padding: 4px 10px;
   border-radius: 12px;
@@ -161,7 +161,7 @@
 /* Card body */
 .promo-card-body p {
   margin: 0.3rem 0;
-  color: #555;
+  color: var(--color-text-muted);
   font-size: 0.95rem;
 }
 
@@ -440,7 +440,7 @@
 /* Secondary button */
 .promo-btn-secondary {
   background: #ededed;
-  color: #444;
+  color: var(--color-text-main);
   padding: 0.85rem 1.75rem;
   border-radius: 10px;
   border: none;
@@ -461,14 +461,14 @@
 
 /* LIVE VALIDATION */
 .invalid {
-  border-color: #ff5c5c !important;
-  box-shadow: 0 0 0 2px rgba(255,92,92,0.3) !important;
+  border-color: var(--color-brand-red) !important;
+  box-shadow: 0 0 0 2px rgba(255, 86, 86, 0.3) !important;
 }
 
 .promo-error-msg {
   margin-top: 4px;
   font-size: 0.8rem;
-  color: #ff4b4b;
+  color: var(--color-brand-red);
   font-weight: 600;
 }
 

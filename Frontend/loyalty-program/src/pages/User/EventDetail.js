@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../Contexts/AuthContext";
 import api from "../../services/api";
 import "./EventDetail.css";
@@ -9,6 +9,7 @@ import MessageModal from "../../Components/MessageModal";
 export default function EventDetail() {
   const { eventId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
 
   // State
@@ -232,7 +233,7 @@ export default function EventDetail() {
           <button
             type="button"
             className="btn-back btn-back-spaced"
-            onClick={() => navigate("/events")}
+            onClick={() => navigate(location.state?.backTo || "/events")}
           >
             Back to Events
           </button>
@@ -247,7 +248,11 @@ export default function EventDetail() {
         <div className="empty-state">
           <i className="fas fa-calendar-times empty-icon"></i>
           <h3>Event not found</h3>
-          <button type="button" className="btn-back" onClick={() => navigate("/events")}>
+          <button
+            type="button"
+            className="btn-back"
+            onClick={() => navigate(location.state?.backTo || "/events")}
+          >
             Back to Events
           </button>
         </div>
@@ -258,7 +263,11 @@ export default function EventDetail() {
   return (
     <div className="dashboard-container">
       {/* Back Button */}
-      <button type="button" className="btn-back-link" onClick={() => navigate("/events")}>
+      <button
+        type="button"
+        className="btn-back-link"
+        onClick={() => navigate(location.state?.backTo || "/events")}
+      >
         <i className="fas fa-arrow-left"></i> Back to Events
       </button>
 
