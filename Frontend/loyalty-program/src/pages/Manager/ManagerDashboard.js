@@ -37,16 +37,24 @@ export default function ManagerDashboard() {
             </p>
           </div>
         </Link>
-
-        <Link to="/manager/events" className="manager-card card-content">
+        
+        <Link to="/manager/events" className="manager-card card-events">
           <div>
             <i className="fas fa-calendar-alt"></i>
-            <h2>Events & Promotions</h2>
-            <p>
-              Create new events, manage RSVPs, and publish promotional offers.
-            </p>
+            <h2>Event Management</h2>
+            <p>Create events, edit details, and manage RSVPs & guest points.</p>
           </div>
         </Link>
+
+        <Link to="/manager/promotions" className="manager-card card-promotions">
+          <div>
+            <i className="fas fa-bullhorn"></i>
+            <h2>Promotions Management</h2>
+            <p>Create promotional offers, edit rules, and publish campaigns.</p>
+          </div>
+        </Link>
+
+
       </div>
     </div>
   );
