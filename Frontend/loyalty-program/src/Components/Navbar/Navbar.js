@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./Navbar.css";
 import { useAuth } from "../../Contexts/AuthContext";
 
@@ -8,19 +8,27 @@ import {
   MenuItemsCashier,
   MenuItemsManager,
   MenuItemsSuper,
+  MenuItemsOrganizer,
 } from "./NavbarMenus";
 
 const Navbar = () => {
   const [clicked, setClicked] = useState(false);
   const { user, activeRole, setActiveRole, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const handleClick = () => setClicked(!clicked);
+
+  const handleRoleChange = (e) => {
+    setActiveRole(e.target.value);
+    navigate("/dashboard");
+  };
 
   let menu = MenuItemsUser;
   if (activeRole === "cashier") menu = MenuItemsCashier;
   else if (activeRole === "manager") menu = MenuItemsManager;
   else if (activeRole === "superuser") menu = MenuItemsSuper;
+  else if (activeRole === "organizer") menu = MenuItemsOrganizer;
   if (!user) menu = [];
 
   return (
@@ -51,12 +59,12 @@ const Navbar = () => {
           </li>
         ))}
 
-        {user && user.role !== "regular" && (
+        {user && (user.role !== "regular" || user.isOrganizer) && (
           <li>
             <select
               className="nav-links"
               value={activeRole}
-              onChange={(e) => setActiveRole(e.target.value)}
+              onChange={handleRoleChange}
               style={{
                 background: "transparent",
                 border: "none",
@@ -72,11 +80,12 @@ const Navbar = () => {
                 <option value="cashier">Cashier Console</option>
               )}
 
+              {(user.role === "manager" || user.isOrganizer) && (
+                <option value="organizer">Organizer View</option>
+              )}
+
               {user.role === "manager" && (
-                <>
-                  <option value="manager">Manager Dashboard</option>
-                  <option value="organizer">Organizer View</option>
-                </>
+                <option value="manager">Manager Dashboard</option>
               )}
 
               {user.role === "superuser" && (

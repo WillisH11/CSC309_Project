@@ -4,6 +4,7 @@ import { useAuth } from "../Contexts/AuthContext";
 import UserDashboard from "./User/UserDashboard";
 import CashierDashboard from "./Cashier/CashierDashboard";
 import ManagerDashboard from "./Manager/ManagerDashboard";
+import OrganizerDashboard from "./Organizer/OrganizerDashboard";
 import SuperAdminDashboard from "./Superuser/SuperAdmin";
 
 export default function Dashboard() {
@@ -13,8 +14,9 @@ export default function Dashboard() {
     case "cashier":
       return <CashierDashboard />;
     case "manager":
-    case "organizer":
       return <ManagerDashboard />;
+    case "organizer":
+      return <OrganizerDashboard />;
     case "superuser":
       return <SuperAdminDashboard />;
     case "regular":
