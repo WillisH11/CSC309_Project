@@ -7,7 +7,7 @@ import Dashboard from "./pages/Dashboard.js";
 import MyQR from "./pages/User/MyQR.js";
 import Transfer from "./pages/User/Transfer.js";
 import Redeem from "./pages/User/Redeem.js";
-import Promotions from "./pages/User/Promotions.js";
+import UserPromotions from "./pages/User/UserPromotions.js";
 import Events from "./pages/User/Events.js";
 import EventDetail from "./pages/User/EventDetail.js";
 import Transactions from "./pages/User/Transactions.js";
@@ -26,7 +26,8 @@ import CashierRedeem from "./pages/Cashier/CashierRedeem.js";
 // Manager pages
 import ManagerUsers from "./pages/Manager/ManagerUsers.js";
 import ManagerTransactions from "./pages/Manager/ManagerTransactions.js";
-import ManagerPromotions from "./pages/Manager/ManagerEvents.js";
+import ManagerTransactionDetail from "./pages/Manager/ManagerTransactionDetail.js";
+import ManagerPromotions from "./pages/Manager/ManagerPromotions.js";
 import ManagerEvents from "./pages//Manager/ManagerEvents.js";
 
 // Superuser pages
@@ -94,7 +95,7 @@ function App() {
           path="/promotions"
           element={
             <ProtectedRoute>
-              <Promotions />
+              <UserPromotions />
             </ProtectedRoute>
           }
         />
@@ -187,6 +188,15 @@ function App() {
           element={
             <ProtectedRoute>
               <ManagerTransactions />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/manager/transactions/:id"
+          element={
+            <ProtectedRoute>
+              <ManagerTransactionDetail />
             </ProtectedRoute>
           }
         />
