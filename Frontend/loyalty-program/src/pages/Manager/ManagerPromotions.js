@@ -29,6 +29,12 @@ export default function ManagerPromotions() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+  });
 
   /* ---------- Modal State ---------- */
   const [showCreate, setShowCreate] = useState(false);
@@ -48,6 +54,21 @@ export default function ManagerPromotions() {
 
   const [errors, setErrors] = useState({});
   const [hasStarted, setHasStarted] = useState(false);
+
+  const showMessage = (title, message, type = "info") => {
+    setModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type,
+    });
+  };
+
+  const closeMessage = () =>
+    setModalConfig((prev) => ({
+      ...prev,
+      isOpen: false,
+    }));
 
   /* ---------- Load Promotions ---------- */
   useEffect(() => {
@@ -489,6 +510,14 @@ export default function ManagerPromotions() {
           hasStarted={hasStarted}
         />
       )}
+
+      <MessageModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeMessage}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+      />
     </div>
   );
 }

@@ -18,6 +18,7 @@ export default function CashierCreate() {
   const [oneTimeBonus, setOneTimeBonus] = useState(0);
 
   const [bestAutoPromo, setBestAutoPromo] = useState(null);
+  const [oneTimeError, setOneTimeError] = useState("");
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -78,25 +79,20 @@ export default function CashierCreate() {
     );
 
     let bestPromo = null;
-    let bestRate = 0;
+    let bestBonus = 0;
 
     eligible.forEach((p) => {
-      if (p.rate > bestRate) {
-        bestRate = p.rate;
+      if (!p.rate) return;
+      // bonus = spent * rate * 4 (base is 4 pts per $1)
+      const bonus = Math.round(spent * (p.rate * 4));
+      if (bonus > bestBonus) {
+        bestBonus = bonus;
         bestPromo = p;
       }
     });
 
     setBestAutoPromo(bestPromo);
-
-    let auto = 0;
-    if (bestPromo) {
-      // rate is "extra points per $1" according to A2 spec
-      auto = Math.round(spent * (bestPromo.rate * 4));
-      setAutoBonus(auto);
-    } else {
-      setAutoBonus(0);
-    }
+    setAutoBonus(bestBonus);
 
     // ---------- One-time promo ----------
     const ot = oneTimePromos.find((p) => p.id == selectedOneTime);
@@ -136,12 +132,24 @@ export default function CashierCreate() {
     setSuccess("");
 
     const promoIds = [];
+    setOneTimeError("");
 
     // Add best auto promo
     if (bestAutoPromo) promoIds.push(bestAutoPromo.id);
 
-    // Add selected one-time promo
-    if (selectedOneTime) promoIds.push(Number(selectedOneTime));
+    // Add selected one-time promo (validate min spending before submit)
+    if (selectedOneTime) {
+      const ot = oneTimePromos.find((p) => p.id == selectedOneTime);
+      if (ot) {
+        if (Number(amount) < ot.minSpending) {
+          setOneTimeError(
+            `Min spending $${ot.minSpending} required for ${ot.name}`
+          );
+          return;
+        }
+        promoIds.push(Number(selectedOneTime));
+      }
+    }
 
     try {
       const res = await api.post("/transactions", {
@@ -182,6 +190,7 @@ export default function CashierCreate() {
 
       {error && <div className="cashier-alert error">{error}</div>}
       {success && <div className="cashier-alert success">{success}</div>}
+      {oneTimeError && <div className="cashier-alert error">{oneTimeError}</div>}
 
       <form className="cashier-form" onSubmit={handleSubmit}>
         {/* UTORID */}
