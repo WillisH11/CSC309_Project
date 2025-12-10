@@ -1,20 +1,28 @@
 import React, { useEffect, useState } from "react";
 import api from "../../services/api";
+import { useAuth } from "../../Contexts/AuthContext";
 import "./UserPromotions.css";
 
 export default function UserPromotions() {
   const [promotions, setPromotions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const { activeRole } = useAuth();
 
   useEffect(() => {
     loadPromotions();
-  }, []);
+  }, [activeRole]);
 
   async function loadPromotions() {
     try {
       setLoading(true);
-      const res = await api.get("/promotions"); // user mode returns only active promotions
+      // Send viewMode=regular to ensure only active promotions are shown
+      // This is important when managers switch to regular view
+      const params = new URLSearchParams();
+      if (activeRole === "regular") {
+        params.append("viewMode", "regular");
+      }
+      const res = await api.get(`/promotions?${params.toString()}`);
       setPromotions(res.results || []);
     } catch (err) {
       console.error(err);

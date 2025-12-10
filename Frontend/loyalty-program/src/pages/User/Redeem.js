@@ -5,7 +5,7 @@ import "./Redeem.css";
 
 export default function Redeem() {
   const navigate = useNavigate();
-  const { token, user } = useAuth();
+  const { token, user, refreshUser } = useAuth();
   const [points, setPoints] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -43,6 +43,9 @@ export default function Redeem() {
         setLoading(false);
         return;
       }
+
+      // Refresh user data to update points before redirecting
+      await refreshUser();
 
       // Successful → redirect to QR page
       navigate(`/redeem-qr/${data.id}`);

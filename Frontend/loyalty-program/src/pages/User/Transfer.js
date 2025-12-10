@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import api from "../../services/api";
+import { useAuth } from "../../Contexts/AuthContext";
 import "./Transfer.css";
 
 export default function Transfer() {
+  const { refreshUser } = useAuth();
   const [utorid, setUtorid] = useState("");
   const [recipient, setRecipient] = useState(null);
   const [amount, setAmount] = useState("");
@@ -11,9 +13,7 @@ export default function Transfer() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // -------------------------------
   // LOOK UP USER
-  // -------------------------------
   async function lookupUser() {
     console.log("🔎 Lookup clicked. UTORid:", utorid);
 
@@ -46,10 +46,8 @@ export default function Transfer() {
     }
   }
 
-
-  // -------------------------------
   // SUBMIT TRANSFER
-  // -------------------------------
+  
   async function submitTransfer(e) {
     e.preventDefault();
     console.log("🚀 SubmitTransfer triggered");
@@ -79,6 +77,9 @@ export default function Transfer() {
       });
 
       console.log("✅ Transfer success:", res.data);
+
+      // Refresh user data to update points
+      await refreshUser();
 
       setSuccess(`Transferred ${amount} pts to ${recipient.utorid}!`);
       setUtorid("");

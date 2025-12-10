@@ -1,133 +1,394 @@
+.cashier-page {
+  padding: 1.25rem;
+  max-width: 800px;
+  margin: 0 auto;
+  background: var(--color-bg);
+  min-height: calc(100vh - 80px);
+}
+
+.cashier-page h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  margin-bottom: 0.75rem;
+}
+
+/* Alert Messages */
+.cashier-alert {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  text-align: center;
+  font-weight: 600;
+  border: 2px solid;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  font-size: 0.9rem;
+}
+
+.cashier-alert.error {
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);
+  color: var(--color-brand-red);
+  border-color: var(--color-brand-red);
+}
+
+.cashier-alert.success {
+  background: linear-gradient(135deg, #f0fff4 0%, #dcfce7 100%);
+  color: #155724;
+  border-color: #28a745;
+}
+
+/* Form Styling */
+.cashier-form {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 2px solid var(--color-border);
+}
+
+.cashier-form label {
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.4rem;
+  display: block;
+  color: var(--color-text-main);
+  font-size: 0.9rem;
+}
+
+.cashier-form input,
+.promo-select {
+  width: 100%;
+  padding: 0.7rem;
+  margin-bottom: 0.75rem;
+  border-radius: 8px;
+  border: 2px solid var(--color-border);
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.cashier-form input:focus,
+.promo-select:focus {
+  outline: none;
+  border-color: var(--color-brand-orange);
+  box-shadow: 0 0 0 3px rgba(255, 162, 57, 0.1);
+}
+
+.cashier-form input:hover,
+.promo-select:hover {
+  border-color: #ddd;
+}
+
+/* Section Titles */
+.section-title {
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--color-border);
+}
+
+/* Highlight Box */
+.cashier-highlight {
+  background: linear-gradient(135deg, #fff8e6 0%, #fff 100%);
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--color-brand-yellow);
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  color: var(--color-text-main);
+  box-shadow: 0 2px 8px rgba(255, 238, 145, 0.2);
+  font-size: 0.9rem;
+}
+
+/* Promotion Row */
+.promo-row {
+  background: linear-gradient(135deg, #f9f9f9 0%, #fff 100%);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.6rem;
+  border-radius: 8px;
+  border-left: 4px solid var(--color-brand-orange);
+  border: 2px solid var(--color-border);
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.promo-row:hover {
+  border-color: var(--color-brand-orange);
+  box-shadow: 0 2px 8px rgba(255, 162, 57, 0.15);
+  transform: translateX(2px);
+}
+
+.promo-row strong {
+  color: var(--color-text-main);
+  font-size: 0.9rem;
+}
+
+/* Total Box */
+.total-box {
+  background: linear-gradient(135deg, #eef6ff 0%, #fff 100%);
+  padding: 1rem;
+  border-radius: 10px;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: 2px solid var(--color-brand-blue);
+  box-shadow: 0 4px 12px rgba(140, 228, 255, 0.2);
+  text-align: center;
+}
+
+.total-box strong {
+  font-size: 1.25rem;
+  color: var(--color-brand-orange);
+  font-weight: 700;
+  display: block;
+  margin-top: 0.4rem;
+}
+
+/* Submit Button */
+.cashier-submit-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--color-brand-orange) 0%, #ff9a3d 100%);
+  padding: 0.875rem 1.5rem;
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  margin-top: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(255, 162, 57, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cashier-submit-btn:hover {
+  background: linear-gradient(135deg, var(--color-btn-hover) 0%, #ff8a2e 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 162, 57, 0.4);
+}
+
+.cashier-submit-btn:active {
+  transform: translateY(0);
+}
+
+/* Cashier Dashboard */
 .cashier-dashboard {
-    text-align: center;
-    padding: 3rem 1rem;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.cashier-dashboard h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  margin-bottom: 0.5rem;
+}
+
+.cashier-dashboard > p {
+  color: var(--color-text-muted);
+  margin-bottom: 2rem;
 }
 
 .cashier-options {
-    display: flex;
-    justify-content: center;
-    gap: 2rem;
-    margin-top: 2rem;
-    flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
 }
 
 .cashier-card {
-    display: block;
-    width: 250px;
-    padding: 2rem;
-    background: white;
-    border: 3px solid transparent;
-    border-radius: 12px;
-    text-decoration: none;
-    color: var(--color-text-main);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    transition: all 0.3s ease;
+  background: white;
+  padding: 2.5rem 2rem;
+  border-radius: 14px;
+  border: 2px solid var(--color-border);
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border-top: 6px solid;
 }
 
-.cashier-card.purchase { border-color: var(--color-brand-blue); }
-.cashier-card.purchase i { color: var(--color-brand-blue); }
-
-.cashier-card.redeem { border-color: var(--color-brand-orange); }
-.cashier-card.redeem i { color: var(--color-brand-orange); }
-
 .cashier-card:hover {
-    transform: translateY(-5px);
-    background-color: #fffdf5;
+  transform: translateY(-6px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 .cashier-card i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    display: block;
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.9;
 }
 
+.cashier-card h3 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--color-text-main);
+}
+
+.cashier-card span {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.cashier-card.purchase {
+  border-top-color: var(--color-brand-orange);
+}
+
+.cashier-card.purchase i {
+  color: var(--color-brand-orange);
+}
+
+.cashier-card.purchase:hover {
+  border-color: var(--color-brand-orange);
+}
+
+.cashier-card.redeem {
+  border-top-color: var(--color-brand-blue);
+}
+
+.cashier-card.redeem i {
+  color: var(--color-brand-blue);
+}
+
+.cashier-card.redeem:hover {
+  border-color: var(--color-brand-blue);
+}
+
+/* Empty State for Promotions */
+.cashier-form p {
+  color: var(--color-text-muted);
+  font-style: italic;
+  padding: 0.75rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* Cashier Redeem Page */
 .cashier-form-container {
-    max-width: 500px;
-    margin: 3rem auto;
-    background: white;
-    padding: 2.5rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    border-top: 5px solid var(--color-brand-blue);
-    text-align: left;
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 2px solid var(--color-border);
+  margin-top: 1.5rem;
 }
 
-.cashier-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1.15rem;
-}
-
-.cashier-form-container label {
-    font-weight: 600;
-    margin-bottom: 0.35rem;
-    display: block;
-}
-
-.cashier-form-container input {
-    padding: 0.85rem;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    font-size: 1rem;
-    width: 100%;
-}
-
-.hint {
-    font-size: 0.85rem;
-    color: #777;
-    margin-top: -0.4rem;
-}
-
-.earned-preview {
-    background: #fff8e6;
-    border-left: 5px solid var(--color-brand-orange);
-    padding: 0.9rem 1rem;
-    border-radius: 8px;
-    font-weight: bold;
-    color: #b46900;
-    margin-top: -0.5rem;
-}
-
-.cashier-button {
-    padding: 0.9rem;
-    background: var(--color-brand-blue);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.2s ease;
-}
-
-.cashier-button:hover {
-    background: var(--color-brand-orange);
-}
-
-.banner {
-    padding: 0.85rem 1rem;
-    border-radius: 8px;
-    margin-bottom: 1.2rem;
-    font-weight: 600;
-    text-align: center;
-}
-
-.success-banner {
-    background: #e8fbe9;
-    color: #1a7f37;
-    border-left: 5px solid #1a7f37;
-}
-
-.error-banner {
-    background: #ffe9e9;
-    color: #c62828;
-    border-left: 5px solid #c62828;
+.cashier-form-container > p {
+  color: var(--color-text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 2rem;
 }
 
 .redeem-card {
-    border: 1px solid #eee;
+  background: linear-gradient(135deg, #f9f9f9 0%, #fff 100%);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 2px solid var(--color-border);
+  margin-bottom: 1rem;
+  transition: all 0.2s ease;
+}
+
+.redeem-card:hover {
+  border-color: var(--color-brand-orange);
+  box-shadow: 0 4px 12px rgba(255, 162, 57, 0.15);
+  transform: translateY(-2px);
+}
+
+.redeem-card strong {
+  color: var(--color-text-main);
+  font-weight: 600;
+  display: inline-block;
+  min-width: 100px;
+  margin-right: 0.5rem;
+}
+
+.redeem-card > * {
+  margin-bottom: 0.75rem;
+  color: var(--color-text-main);
+  font-size: 0.95rem;
+}
+
+.redeem-card > *:last-child {
+  margin-bottom: 0;
+}
+
+.cashier-button {
+  background: linear-gradient(135deg, var(--color-brand-orange) 0%, #ff9a3d 100%);
+  color: white;
+  border: none;
+  padding: 0.875rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(255, 162, 57, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.cashier-button:hover {
+  background: linear-gradient(135deg, var(--color-btn-hover) 0%, #ff8a2e 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 162, 57, 0.4);
+}
+
+.cashier-button:active {
+  transform: translateY(0);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .cashier-page {
+    padding: 1.5rem 1rem;
+  }
+
+  .cashier-form {
+    padding: 1.5rem;
+  }
+
+  .cashier-options {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .cashier-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .total-box {
+    font-size: 1.1rem;
+  }
+
+  .total-box strong {
+    font-size: 1.3rem;
+  }
+
+  .cashier-form-container {
+    padding: 1.5rem;
+  }
+
+  .redeem-card {
     padding: 1.25rem;
-    margin-bottom: 1.2rem;
-    border-radius: 10px;
-    background: #fafafa;
-    text-align: left;
+  }
 }

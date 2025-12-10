@@ -88,6 +88,20 @@ export default function ManagerTransactionDetail() {
           <span>{tx.amount}</span>
         </div>
 
+        {tx.type === "purchase" && tx.spent && (
+          <div className="row">
+            <span>Spent:</span>
+            <span>${tx.spent.toFixed(2)}</span>
+          </div>
+        )}
+
+        {tx.type === "purchase" && tx.promotionBonus && tx.promotionBonus > 0 && (
+          <div className="row tx-promotion-bonus">
+            <span>🎉 Promotion Bonus:</span>
+            <span className="tx-bonus-amount">+{tx.promotionBonus} points</span>
+          </div>
+        )}
+
         <div className="row">
           <span>Created By:</span>
           <span>{tx.createdBy?.utorid || "N/A"}</span>

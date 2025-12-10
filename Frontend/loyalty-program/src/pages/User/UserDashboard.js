@@ -7,11 +7,47 @@ import PointsBreakdownChart from "../../Components/Charts/PointsBreakdownChart";
 import "./UserDashboard.css";
 
 export default function UserDashboard() {
-  const { user, setUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [allTransactions, setAllTransactions] = useState([]);
 
   useEffect(() => {
+    let isMounted = true;
+
+    async function loadDashboard() {
+      try {
+        // Refresh user data to get latest points
+        await refreshUser();
+        
+        // Load transactions
+        const tx = await api.get("/users/me/transactions?limit=5&page=1");
+        if (isMounted) {
+          setRecentTransactions(tx.results || []);
+        }
+      } catch (err) {
+        console.error("Dashboard load error:", err);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadDashboard();
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
+
+  if (loading || !user) {
+    return (
+      <div className="dashboard-container">
+        <h2>Loading Dashboard...</h2>
+      </div>
+    );
+  }
     // Fetch recent transactions for activity list
     api
       .get("/users/me/transactions?limit=5&page=1")
@@ -95,6 +131,7 @@ export default function UserDashboard() {
         ) : (
           <div>
             {recentTransactions.map((tx) => {
+              const isPendingRedemption = tx.type === "redemption" && tx.relatedId === null;
               const displayAmount =
                 tx.type === "redemption" ? -tx.redeemed : tx.amount;
 
@@ -103,6 +140,8 @@ export default function UserDashboard() {
                   ? "fa-shopping-bag"
                   : tx.type === "transfer"
                   ? "fa-exchange-alt"
+                  : tx.type === "redemption"
+                  ? "fa-ticket-alt"
                   : "fa-gift";
 
               return (
@@ -137,6 +176,17 @@ export default function UserDashboard() {
                         }}
                       >
                         {tx.type}
+                        {isPendingRedemption && (
+                          <span style={{ 
+                            marginLeft: "8px", 
+                            fontSize: "0.75rem", 
+                            color: "#FFA239",
+                            fontWeight: "normal",
+                            fontStyle: "italic"
+                          }}>
+                            (Pending)
+                          </span>
+                        )}
                       </strong>
                       <small style={{ color: "#999" }}>
                         {new Date(tx.createdAt).toLocaleDateString()}
@@ -151,10 +201,21 @@ export default function UserDashboard() {
                       fontSize: "1.1rem",
                       minWidth: "50px",
                       textAlign: "right",
+                      opacity: isPendingRedemption ? 0.6 : 1,
                     }}
                   >
                     {displayAmount > 0 ? "+" : ""}
                     {displayAmount}
+                    {isPendingRedemption && (
+                      <div style={{ 
+                        fontSize: "0.7rem", 
+                        color: "#999",
+                        fontWeight: "normal",
+                        marginTop: "2px"
+                      }}>
+                        (Pending)
+                      </div>
+                    )}
                   </div>
                 </div>
               );

@@ -1,123 +1,255 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import api from "../../services/api";
 import "./Cashier.css";
 
 export default function CashierCreate() {
   const [utorid, setUtorid] = useState("");
-  const [spent, setSpent] = useState("");
+  const [amount, setAmount] = useState("");
   const [remark, setRemark] = useState("");
 
-  const [earnedPreview, setEarnedPreview] = useState(0);
-  const [successMsg, setSuccessMsg] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
+  const [promotions, setPromotions] = useState([]);
+  const [autoPromos, setAutoPromos] = useState([]);
+  const [oneTimePromos, setOneTimePromos] = useState([]);
 
-  // Auto-calc earned points (1 point per 0.25)
-  function updateSpent(value) {
-    setSpent(value);
-    const num = parseFloat(value);
-    if (!isNaN(num) && num > 0) {
-      setEarnedPreview(Math.round((num * 100) / 25));
-    } else {
-      setEarnedPreview(0);
+  const [selectedOneTime, setSelectedOneTime] = useState("");
+
+  const [basePoints, setBasePoints] = useState(0);
+  const [autoBonus, setAutoBonus] = useState(0);
+  const [oneTimeBonus, setOneTimeBonus] = useState(0);
+
+  const [bestAutoPromo, setBestAutoPromo] = useState(null);
+
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    loadPromotions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [utorid]);
+
+  async function loadPromotions() {
+    try {
+      // If customer UTORid is provided, filter promotions by their usage
+      const params = utorid.trim() 
+        ? { params: { customerUtorid: utorid.trim() } }
+        : {};
+      
+      const res = await api.get("/promotions", params);
+      const list = res.results || [];
+
+      setPromotions(list);
+      setAutoPromos(list.filter((p) => p.type === "automatic"));
+      setOneTimePromos(list.filter((p) => p.type === "one-time"));
+      
+      // Clear selected one-time promo if it's no longer available
+      if (selectedOneTime) {
+        const stillAvailable = list.some((p) => p.id == selectedOneTime && p.type === "one-time");
+        if (!stillAvailable) {
+          setSelectedOneTime("");
+          setOneTimeBonus(0);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load promotions.");
     }
   }
 
+  //  POINT CALCULATIONS
+
+  function updateAmount(value) {
+    setAmount(value);
+    const spent = Number(value);
+
+    if (!spent || spent <= 0) {
+      setBasePoints(0);
+      setAutoBonus(0);
+      setOneTimeBonus(0);
+      return;
+    }
+
+    // base points: 1 point per 25 cents → 4 per $1, ROUND (A2 spec)
+    const base = Math.round(spent * 4);
+    setBasePoints(base);
+
+    // ---------- Automatic promos ----------
+    const eligible = autoPromos.filter(
+      (p) => !p.minSpending || spent >= p.minSpending
+    );
+
+    let bestPromo = null;
+    let bestRate = 0;
+
+    eligible.forEach((p) => {
+      if (p.rate > bestRate) {
+        bestRate = p.rate;
+        bestPromo = p;
+      }
+    });
+
+    setBestAutoPromo(bestPromo);
+
+    let auto = 0;
+    if (bestPromo) {
+      // rate is "extra points per $1" according to A2 spec
+      auto = Math.round(spent * (bestPromo.rate * 4));
+      setAutoBonus(auto);
+    } else {
+      setAutoBonus(0);
+    }
+
+    // ---------- One-time promo ----------
+    const ot = oneTimePromos.find((p) => p.id == selectedOneTime);
+
+    if (ot && spent >= ot.minSpending) {
+      setOneTimeBonus(ot.points);
+    } else {
+      setOneTimeBonus(0);
+    }
+  }
+
+  // ONE-TIME SELECT HANDLER
+
+  function handleOneTimeSelect(id) {
+    setSelectedOneTime(id);
+
+    const spent = Number(amount);
+    if (!spent || spent <= 0) {
+      setOneTimeBonus(0);
+      return;
+    }
+
+    const promo = oneTimePromos.find((p) => p.id == id);
+
+    if (promo && spent >= promo.minSpending) {
+      setOneTimeBonus(promo.points);
+    } else {
+      setOneTimeBonus(0);
+    }
+  }
+
+  // SUBMIT PURCHASE
+
   async function handleSubmit(e) {
     e.preventDefault();
-    setErrorMsg("");
-    setSuccessMsg("");
+    setError("");
+    setSuccess("");
+
+    const promoIds = [];
+
+    // Add best auto promo
+    if (bestAutoPromo) promoIds.push(bestAutoPromo.id);
+
+    // Add selected one-time promo
+    if (selectedOneTime) promoIds.push(Number(selectedOneTime));
 
     try {
       const res = await api.post("/transactions", {
         type: "purchase",
         utorid: utorid.trim(),
-        spent: parseFloat(spent),
+        spent: Number(amount),
         remark,
-        promotionIds: []
+        promotionIds: promoIds
       });
 
-      setSuccessMsg(`Purchase created! Earned ${res.earned} points.`);
-      setUtorid("");
-      setSpent("");
-      setRemark("");
-      setEarnedPreview(0);
+      setSuccess(`Created! Earned ${res.earned} points.`);
 
+      // Reload promotions to reflect that customer has used the one-time promotion
+      await loadPromotions();
+
+      // reset fields (but keep UTORid so cashier can create another transaction for same customer)
+      setAmount("");
+      setRemark("");
+      setSelectedOneTime("");
+      setBasePoints(0);
+      setAutoBonus(0);
+      setOneTimeBonus(0);
     } catch (err) {
       console.error(err);
-      setErrorMsg(err.message || "Failed to create purchase.");
+      // Extract error message from Error object or response data
+      const errorMessage = err.message || err.error || "Failed to create purchase.";
+      setError(errorMessage);
     }
   }
 
+  const totalEarned = basePoints + autoBonus + oneTimeBonus;
+
+  // UI
+  
   return (
-    <div className="cashier-dashboard">
-      <h1>Create Purchase Transaction</h1>
+    <div className="cashier-page">
+      <h1>Create Purchase</h1>
 
-      <div className="cashier-form-container">
+      {error && <div className="cashier-alert error">{error}</div>}
+      {success && <div className="cashier-alert success">{success}</div>}
 
-        {/* SUCCESS BANNER */}
-        {successMsg && (
-          <div className="banner success-banner">
-            {successMsg}
-          </div>
+      <form className="cashier-form" onSubmit={handleSubmit}>
+        {/* UTORID */}
+        <label>Customer UTORid</label>
+        <input
+          type="text"
+          value={utorid}
+          onChange={(e) => setUtorid(e.target.value)}
+          required
+        />
+
+        {/* SPENDING AMOUNT */}
+        <label>Amount Spent ($)</label>
+        <input
+          type="number"
+          value={amount}
+          onChange={(e) => updateAmount(e.target.value)}
+          required
+        />
+
+        {amount > 0 && (
+          <div className="cashier-highlight">+ {basePoints} base points</div>
         )}
 
-        {/* ERROR BANNER */}
-        {errorMsg && (
-          <div className="banner error-banner">
-            {errorMsg}
+        {/* AUTO PROMO SECTION */}
+        <h2 className="section-title">Automatic Promotion (best applied)</h2>
+
+        {bestAutoPromo ? (
+          <div className="promo-row">
+            <strong>{bestAutoPromo.name}</strong> — {bestAutoPromo.rate * 100}% bonus
           </div>
+        ) : (
+          <p>No automatic promotions available.</p>
         )}
 
-        <form onSubmit={handleSubmit}>
+        {/* ONE-TIME PROMO SELECT */}
+        <h2 className="section-title">One-Time Promotions</h2>
 
-          <div className="field-group">
-            <label>Customer UTORid</label>
-            <input
-              type="text"
-              value={utorid}
-              onChange={(e) => setUtorid(e.target.value)}
-              placeholder="e.g. regularuser"
-              required
-            />
-            <small className="hint">Must be an existing customer.</small>
-          </div>
+        <select
+          className="promo-select"
+          value={selectedOneTime}
+          onChange={(e) => handleOneTimeSelect(e.target.value)}
+        >
+          <option value="">None</option>
+          {oneTimePromos.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name} — {p.points} pts (min spend ${p.minSpending})
+            </option>
+          ))}
+        </select>
 
-          <div className="field-group">
-            <label>Amount Spent ($)</label>
-            <input
-              type="number"
-              step="0.01"
-              value={spent}
-              onChange={(e) => updateSpent(e.target.value)}
-              placeholder="e.g. 12.50"
-              required
-            />
-            <small className="hint">1 point per $0.25 spent.</small>
-          </div>
+        {/* TOTAL POINTS */}
+        <div className="total-box">
+          Total Earned: <strong>{totalEarned}</strong>
+        </div>
 
-          {/* Earned preview */}
-          {earnedPreview > 0 && (
-            <div className="earned-preview">
-              + {earnedPreview} points will be awarded
-            </div>
-          )}
+        {/* REMARK */}
+        <label>Remark (optional)</label>
+        <input
+          type="text"
+          value={remark}
+          onChange={(e) => setRemark(e.target.value)}
+        />
 
-          <div className="field-group">
-            <label>Remark (optional)</label>
-            <input
-              type="text"
-              value={remark}
-              onChange={(e) => setRemark(e.target.value)}
-              placeholder="Optional note"
-            />
-          </div>
-
-          <button type="submit" className="cashier-button">
-            Submit Purchase
-          </button>
-
-        </form>
-      </div>
+        <button type="submit" className="cashier-submit-btn">
+          Submit Purchase
+        </button>
+      </form>
     </div>
   );
 }

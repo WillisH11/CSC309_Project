@@ -39,6 +39,21 @@ export const AuthProvider = ({ children }) => {
     setActiveRole("regular");
   };
 
+  // --Refresh user data--
+  const refreshUser = async () => {
+    try {
+      const data = await api.get("/users/me");
+      setUser(data);
+      // Don't reset activeRole - preserve user's selected role view
+      // Only update activeRole on initial load (when it's null or matches the default)
+      // This allows users to switch between role views without losing their selection
+      return data;
+    } catch (error) {
+      console.error("Failed to refresh user data:", error);
+      return null;
+    }
+  };
+
   // --Auto login--
   useEffect(() => {
     const loadUser = async () => {
@@ -49,7 +64,7 @@ export const AuthProvider = ({ children }) => {
           return;
         }
 
-        setToken(savedToken);       // ⬅️ restore token
+        setToken(savedToken);       // restore token
 
         const data = await api.get("/users/me");
         setUser(data);
@@ -69,11 +84,12 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
-        token,          // ⬅️ FIX: provide token to frontend
+        token,
         activeRole,
         setActiveRole,
         login,
         logout,
+        refreshUser,
         loading
       }}
     >
