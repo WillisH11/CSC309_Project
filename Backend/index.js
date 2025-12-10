@@ -3073,6 +3073,7 @@ app.get('/promotions', jwtMiddleware, async (req, res) => {
                 results: promotions.map(p => ({
                     id: p.id,
                     name: p.name,
+                    description: p.description,
                     type: p.type === 'onetime' ? 'one-time' : p.type,
                     startTime: p.startTime.toISOString(),
                     endTime: p.endTime.toISOString(),
@@ -3120,6 +3121,7 @@ app.get('/promotions', jwtMiddleware, async (req, res) => {
                 results: paginatedPromotions.map(p => ({
                     id: p.id,
                     name: p.name,
+                    description: p.description,
                     type: p.type === 'onetime' ? 'one-time' : p.type,
                     endTime: p.endTime.toISOString(),
                     minSpending: p.minSpending,
