@@ -824,7 +824,51 @@ app.patch("/users/:userId", jwtMiddleware, async (req, res) => {
   }
 });
 
-// TRANSACTIONS
+// Lookup recipient by UTORid (Regular users ARE allowed)
+app.get("/users/find", jwtMiddleware, async (req, res) => {
+    const { utorid } = req.query;
+
+    if (!utorid) {
+        return res.status(400).json({ error: "Missing utorid" });
+    }
+
+    const user = await prisma.user.findUnique({
+        where: { utorid },
+        select: { id: true, utorid: true, name: true }
+    });
+
+    if (!user) {
+        return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json(user);
+});
+
+
+app.get("/users/search-transfer", jwtMiddleware, async (req, res) => {
+    const { utorid } = req.query;
+
+    if (!utorid) return res.status(400).json({ error: "Missing UTORid" });
+
+    const user = await prisma.user.findUnique({
+        where: { utorid },
+        select: { id: true, utorid: true, name: true }
+    });
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    res.json(user);
+});
+
+
+
+// List users 
+app.get('/users', jwtMiddleware, async (req, res) => {
+    try {
+        // Check authorization (Manager+)
+        if (!['manager', 'superuser'].includes(req.auth.role)) {
+            return res.status(403).json({ error: "Forbidden" });
+        }
 
 // Create purchase or adjustment transaction
 app.post("/transactions", jwtMiddleware, async (req, res) => {
@@ -1326,14 +1370,235 @@ app.patch(
             },
           });
 
-          await prisma.user.update({
-            where: { id: transaction.userId },
-            data: {
-              points: {
-                increment: earnedPoints,
-              },
+        // Check if at least one field is being updated
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({ error: "No update fields provided" });
+        }
+
+        // Update user
+        const user = await prisma.user.update({
+            where: { id: userId },
+            data: updateData
+        });
+
+        // Build response with only updated fields (plus id, utorid, name always)
+        const response = {
+            id: user.id,
+            utorid: user.utorid,
+            name: user.name
+        };
+
+        // Add only the fields that were actually updated
+        if ('verified' in updateData) {
+            response.verified = user.verified;
+        }
+        if ('suspicious' in updateData) {
+            response.suspicious = user.suspicious;
+        }
+        if ('role' in updateData) {
+            response.role = user.role;
+        }
+        if ('email' in updateData) {
+            response.email = user.email;
+        }
+
+        res.json(response);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// TRANSACTIONS
+
+// Cashier: Get pending redemption requests
+app.get('/transactions/redemption/pending', jwtMiddleware, async (req, res) => {
+    try {
+        if (!['cashier', 'manager', 'superuser'].includes(req.auth.role)) {
+            return res.status(403).json({ error: "Forbidden" });
+        }
+
+        const pending = await prisma.transaction.findMany({
+            where: {
+                type: "redemption",
+                relatedId: null
             },
-          });
+            include: {
+                user: {
+                    select: { utorid: true, name: true }
+                },
+                createdBy: {
+                    select: { utorid: true }
+                }
+            },
+            orderBy: { createdAt: "desc" }
+        });
+
+        res.json({ results: pending });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+
+// Create purchase or adjustment transaction
+app.post('/transactions', jwtMiddleware, async (req, res) => {
+    try {
+        const { type, utorid, spent, amount, remark, promotionIds, relatedId } = req.body;
+
+        // Validate type
+        if (!['purchase', 'adjustment'].includes(type)) {
+            return res.status(400).json({ error: "Invalid transaction type" });
+        }
+
+        // Check authorization for purchase (cashier+)
+        if (type === 'purchase' && !['cashier', 'manager', 'superuser'].includes(req.auth.role)) {
+            return res.status(403).json({ error: "Forbidden" });
+        }
+
+        // Check authorization for adjustment (manager+)
+        if (type === 'adjustment' && !['manager', 'superuser'].includes(req.auth.role)) {
+            return res.status(403).json({ error: "Forbidden" });
+        }
+
+        // Validate utorid
+        if (!utorid || typeof utorid !== 'string') {
+            return res.status(400).json({ error: "Invalid utorid" });
+        }
+
+        // Check user exists
+        const user = await prisma.user.findUnique({
+            where: { utorid: utorid },
+            select: {
+                id: true,
+                utorid: true,
+                points: true,
+                suspicious: true
+            }
+        });
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        let pointsToAdd = 0;
+        let spentAmount = null;
+        let appliedPromotions = [];
+        let isSuspiciousTransaction = false;
+
+        if (type === 'purchase') {
+            // Check if cashier is suspicious
+            const cashier = await prisma.user.findUnique({
+                where: { id: req.auth.id },
+                select: { suspicious: true }
+            });
+
+            // Transaction is suspicious if either cashier or user is suspicious
+            isSuspiciousTransaction = (cashier && cashier.suspicious) || user.suspicious;
+
+            // Validate spent amount
+            if (!spent || spent <= 0) {
+                return res.status(400).json({ error: "Invalid spent amount" });
+            }
+
+            spentAmount = parseFloat(spent);
+
+            // 1 point per 25 cents 
+            pointsToAdd = Math.round(spentAmount * 100 / 25);
+
+            // Check for active automatic promotions
+            const now = new Date();
+            const activePromotions = await prisma.promotion.findMany({
+                where: {
+                    type: 'automatic',
+                    startTime: { lte: now },
+                    endTime: { gte: now },
+                    OR: [
+                        { minSpending: null },
+                        { minSpending: { lte: spentAmount } }
+                    ]
+                }
+            });
+
+            // Apply automatic promotions
+            for (const promo of activePromotions) {
+                if (promo.rate) {
+                    const bonusPoints = Math.floor(spentAmount * promo.rate);
+                    pointsToAdd += bonusPoints;
+                    appliedPromotions.push(promo.id);
+                }
+            }
+
+            // Apply manually specified one-time promotions
+            if (promotionIds && Array.isArray(promotionIds) && promotionIds.length > 0) {
+                // Fetch the promotions
+                const onetimePromotions = await prisma.promotion.findMany({
+                    where: {
+                        id: { in: promotionIds },
+                        type: 'onetime',
+                        startTime: { lte: now },
+                        endTime: { gte: now }
+                    }
+                });
+
+                // Check if all wanted promotions exist and are valid
+                if (onetimePromotions.length !== promotionIds.length) {
+                    return res.status(400).json({ error: "One or more promotion IDs are invalid" });
+                }
+
+                // Check if user has already used some promotions
+                const existingUsage = await prisma.promotionUsage.findMany({
+                    where: {
+                        userId: user.id,
+                        promotionId: { in: promotionIds }
+                    }
+                });
+
+                if (existingUsage.length > 0) {
+                    return res.status(400).json({ error: "User has already used one or more of these promotions" });
+                }
+
+                // Apply one-time promotions
+                for (const promo of onetimePromotions) {
+                    // Check minimum spending req
+                    if (promo.minSpending && spentAmount < promo.minSpending) {
+                        return res.status(400).json({
+                            error: `Minimum spending of $${promo.minSpending} required for promotion "${promo.name}"`
+                        });
+                    }
+
+                    // Add bonus points
+                    if (promo.points) {
+                        pointsToAdd += promo.points;
+                        appliedPromotions.push(promo.id);
+                    }
+                }
+            }
+
+        } else if (type === 'adjustment') {
+            // Validate amount
+            if (amount === undefined || amount === null || isNaN(amount)) {
+                return res.status(400).json({ error: "Invalid amount" });
+            }
+
+            pointsToAdd = parseInt(amount);
+
+            // Validate relatedId
+            if (!relatedId || isNaN(parseInt(relatedId))) {
+                return res.status(400).json({ error: "Invalid or missing relatedId" });
+            }
+
+            // Check if the related transaction exists
+            const relatedTransaction = await prisma.transaction.findUnique({
+                where: { id: parseInt(relatedId) }
+            });
+
+            if (!relatedTransaction) {
+                return res.status(404).json({ error: "Related transaction not found" });
+            }
         }
 
         // If flagging as suspicious, also mark the cashier who created it as suspicious
@@ -1508,6 +1773,27 @@ app.post("/users/me/transactions", jwtMiddleware, async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
+});
+
+
+// Process redemption 
+app.patch('/transactions/:transactionId/processed', jwtMiddleware, async (req, res) => {
+    try {
+        // Check authorization (Cashier+)
+        if (!['cashier', 'manager', 'superuser'].includes(req.auth.role)) {
+            return res.status(403).json({ error: "Forbidden" });
+        }
+
+        const transactionId = parseInt(req.params.transactionId);
+
+        if (isNaN(transactionId)) {
+            return res.status(400).json({ error: "Invalid transaction ID" });
+        }
+
+        // Get transaction
+        const transaction = await prisma.transaction.findUnique({
+            where: { id: transactionId }
+        });
 
     // Check user is verified
     if (!user.verified) {
@@ -3014,15 +3300,103 @@ app.post("/promotions", jwtMiddleware, async (req, res) => {
     const start = new Date(startTime);
     const end = new Date(endTime);
 
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      return res.status(400).json({ error: "Invalid date format" });
-    }
+        if (isManager) {
+            // Manager filters: started and ended
+            if (req.query.started !== undefined && req.query.ended !== undefined) {
+                return res.status(400).json({ error: "Cannot specify both started and ended" });
+            }
 
-    if (start < new Date()) {
-      return res
-        .status(400)
-        .json({ error: "Start time cannot be in the past" });
-    }
+            if (req.query.started !== undefined) {
+                const started = req.query.started === 'true';
+                if (started) {
+                    where.startTime = { lte: now };
+                } else {
+                    where.startTime = { gt: now };
+                }
+            }
+
+            if (req.query.ended !== undefined) {
+                const ended = req.query.ended === 'true';
+                if (ended) {
+                    where.endTime = { lt: now };
+                } else {
+                    where.endTime = { gte: now };
+                }
+            }
+
+            // Get promotions for managers
+            const [promotions, count] = await Promise.all([
+                prisma.promotion.findMany({
+                    where,
+                    skip,
+                    take: limit,
+                    orderBy: { createdAt: 'desc' }
+                }),
+                prisma.promotion.count({ where })
+            ]);
+
+            res.json({
+                count,
+                results: promotions.map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    description: p.description,
+                    type: p.type === 'onetime' ? 'one-time' : p.type,
+                    startTime: p.startTime.toISOString(),
+                    endTime: p.endTime.toISOString(),
+                    minSpending: p.minSpending,
+                    rate: p.rate,
+                    points: p.points
+                }))
+            });
+        } else {
+            // Regular users: only active promotions they haven't used
+            where.startTime = { lte: now };
+            where.endTime = { gte: now };
+
+            // Get all promotions matching filters
+            const allPromotions = await prisma.promotion.findMany({
+                where,
+                orderBy: { createdAt: 'desc' }
+            });
+
+            // Filter out used one-time promotions
+            const availablePromotions = [];
+            for (const promo of allPromotions) {
+                if (promo.type === 'onetime') {
+                    // Check if user has used this promotion
+                    const usage = await prisma.promotionUsage.findFirst({
+                        where: {
+                            userId: req.auth.id,
+                            promotionId: promo.id
+                        }
+                    });
+                    if (!usage) {
+                        availablePromotions.push(promo);
+                    }
+                } else {
+                    // Automatic promotions are always available when active
+                    availablePromotions.push(promo);
+                }
+            }
+
+            const count = availablePromotions.length;
+            const paginatedPromotions = availablePromotions.slice(skip, skip + limit);
+
+            res.json({
+                count,
+                results: paginatedPromotions.map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    description: p.description,
+                    type: p.type === 'onetime' ? 'one-time' : p.type,
+                    endTime: p.endTime.toISOString(),
+                    minSpending: p.minSpending,
+                    rate: p.rate,
+                    points: p.points
+                }))
+            });
+        }
 
     if (start >= end) {
       return res

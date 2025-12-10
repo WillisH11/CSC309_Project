@@ -1,0 +1,163 @@
+/* Manager Transaction List Page */
+
+.manager-tx-page {
+  max-width: 850px;
+  margin: auto;
+  padding: 20px;
+}
+
+.manager-tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.manager-tx-card {
+  display: block;
+  text-decoration: none;
+  padding: 16px;
+  border-radius: 10px;
+  background: white;
+  border-left: 5px solid #ccc;
+  color: black;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: background 0.2s ease;
+}
+
+.manager-tx-card:hover {
+  background: #f5f5f5;
+}
+
+.tx-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.tx-amount {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.positive {
+  color: green;
+}
+
+.negative {
+  color: red;
+}
+
+.tx-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.tx-row span:first-child {
+  font-weight: 600;
+}
+
+.tx-date {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: #777;
+}
+
+/* Manager Transaction Detail Page */
+
+.manager-tx-detail {
+  max-width: 700px;
+  margin: auto;
+  padding: 20px;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 15px;
+  color: #0077ff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.detail-box {
+  background: white;
+  padding: 18px;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  margin-bottom: 25px;
+}
+
+.detail-box .row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.detail-box .row span:first-child {
+  font-weight: bold;
+}
+
+.detail-box .row:last-child {
+  border-bottom: none;
+}
+
+/* Adjustment Form */
+
+.adjustment-section {
+  background: #fff7ec;
+  padding: 20px;
+  border-radius: 10px;
+  border-left: 5px solid #ffa726;
+}
+
+.adjustment-section h2 {
+  margin-bottom: 10px;
+}
+
+.adjust-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.adjust-form input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.adjust-btn {
+  background: #ff9800;
+  color: white;
+  border: none;
+  padding: 12px;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.adjust-btn:hover {
+  background: #e78a00;
+}
+
+.adjust-error {
+  color: #b00020;
+  background: #ffebee;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.adjust-success {
+  color: #1b5e20;
+  background: #e8f5e9;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}

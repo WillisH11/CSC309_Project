@@ -5,26 +5,45 @@ import api from "../../services/api";
 import "./UserDashboard.css";
 
 export default function UserDashboard() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const [recentTransactions, setRecentTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    api
-      .get("/users/me/transactions?limit=5&page=1")
-      .then((data) => setRecentTransactions(data.results || []))
-      .catch((err) => console.error(err));
-  }, []);
+useEffect(() => {
+  async function loadDashboard() {
+    try {
+      // ONLY load transactions here
+      const tx = await api.get("/users/me/transactions?limit=5&page=1");
+      setRecentTransactions(tx.results || []);
+    } catch (err) {
+      console.error("Dashboard load error:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  loadDashboard();
+}, []);
+
+  if (loading || !user) {
+    return (
+      <div className="dashboard-container">
+        <h2>Loading Dashboard...</h2>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-container">
-      {/* 1. STATUS: Balance Card */}
+
+      {/* BALANCE CARD */}
       <div className="balance-card">
-        <h1>Welcome back, {user?.name || user?.utorid}!</h1>
+        <h1>Welcome back, {user.name || user.utorid}!</h1>
         <p>Current Member Balance</p>
-        <div className="balance-amount">{user?.points || 0} pts</div>
+        <div className="balance-amount">{user.points ?? 0} pts</div>
       </div>
 
-      {/* 2. STATUS: Recent Activity */}
+      {/* RECENT ACTIVITY */}
       <div className="recent-activity">
         <div
           style={{
@@ -35,6 +54,7 @@ export default function UserDashboard() {
           }}
         >
           <h2 style={{ margin: 0 }}>Recent Activity</h2>
+
           <Link
             to="/transactions"
             style={{
@@ -49,16 +69,14 @@ export default function UserDashboard() {
 
         {recentTransactions.length === 0 ? (
           <p style={{ color: "#999", fontStyle: "italic", padding: "1rem 0" }}>
-            No recent activity to show. Go to{" "}
-            <Link to="/rewards">Rewards</Link> to earn points!
+            No recent activity to show.
           </p>
         ) : (
           <div>
             {recentTransactions.map((tx) => {
-              // ⭐ Compute display amount correctly
               const displayAmount =
                 tx.type === "redemption"
-                  ? -tx.redeemed // backend stores redeemed points separately
+                  ? -tx.redeemed
                   : tx.amount;
 
               const icon =
@@ -70,9 +88,7 @@ export default function UserDashboard() {
 
               return (
                 <div key={tx.id} className="activity-item">
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: "15px" }}
-                  >
+                  <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
                     <div
                       style={{
                         background: "#f0f0f0",
@@ -89,9 +105,7 @@ export default function UserDashboard() {
                     </div>
 
                     <div>
-                      <strong
-                        style={{ textTransform: "capitalize", display: "block" }}
-                      >
+                      <strong style={{ textTransform: "capitalize", display: "block" }}>
                         {tx.type}
                       </strong>
                       <small style={{ color: "#999" }}>
@@ -100,7 +114,6 @@ export default function UserDashboard() {
                     </div>
                   </div>
 
-                  {/* ⭐ Render amount with correct styling */}
                   <div
                     className={displayAmount > 0 ? "positive" : "negative"}
                     style={{

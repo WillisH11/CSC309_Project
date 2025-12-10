@@ -1,0 +1,86 @@
+.user-promo-page {
+  padding: 2rem;
+}
+
+.user-promo-page h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.promo-subtitle {
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+/* Promo List Grid */
+.user-promo-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Promo Card */
+.user-promo-card {
+  background: white;
+  padding: 1.4rem;
+  border-radius: 12px;
+  border: 1px solid #eee;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+  transition: 0.25s ease;
+}
+
+.user-promo-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+/* Header */
+.user-promo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: .8rem;
+}
+
+.user-promo-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Badge */
+.user-promo-badge {
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+}
+
+.user-promo-badge.automatic {
+  background: #0077ff;
+}
+
+.user-promo-badge.one-time {
+  background: #ff9800;
+}
+
+/* Description */
+.user-promo-description {
+  margin-bottom: 1rem;
+  color: #555;
+}
+
+/* Details */
+.user-promo-details p {
+  margin: 0.25rem 0;
+  color: #333;
+}
+
+.promo-empty {
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 1.1rem;
+  color: #666;
+}
