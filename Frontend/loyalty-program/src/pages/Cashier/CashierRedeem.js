@@ -5,6 +5,9 @@ import "./Cashier.css";
 export default function CashierRedeem() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [transactionId, setTransactionId] = useState("");
+  const [manualError, setManualError] = useState("");
+  const [manualSuccess, setManualSuccess] = useState("");
 
   // Fetch pending redemption requests
   async function loadRequests() {
@@ -33,6 +36,35 @@ export default function CashierRedeem() {
     }
   }
 
+  // Process redemption by manually entered transaction ID
+  async function processByTransactionId(e) {
+    e.preventDefault();
+    setManualError("");
+    setManualSuccess("");
+
+    if (!transactionId || !transactionId.trim()) {
+      setManualError("Please enter a transaction ID.");
+      return;
+    }
+
+    const id = parseInt(transactionId.trim());
+    if (isNaN(id) || id <= 0) {
+      setManualError("Please enter a valid transaction ID.");
+      return;
+    }
+
+    try {
+      await api.patch(`/transactions/${id}/processed`);
+      setManualSuccess(`Transaction #${id} processed successfully!`);
+      setTransactionId("");
+      // Reload the list to refresh
+      await loadRequests();
+    } catch (err) {
+      const errorMessage = err.message || err.error || "Failed to process redemption.";
+      setManualError(errorMessage);
+    }
+  }
+
   useEffect(() => {
     loadRequests();
   }, []);
@@ -43,6 +75,50 @@ export default function CashierRedeem() {
     <div className="cashier-dashboard">
       <h1>Approve Redemptions</h1>
 
+      {/* Manual Transaction ID Input */}
+      <div className="cashier-form-container" style={{ marginBottom: "2rem" }}>
+        <h2 className="section-title">Process by Transaction ID</h2>
+        <form onSubmit={processByTransactionId} style={{ display: "flex", gap: "1rem", alignItems: "flex-end" }}>
+          <div style={{ flex: 1 }}>
+            <label htmlFor="transaction-id" style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600 }}>
+              Transaction ID:
+            </label>
+            <input
+              id="transaction-id"
+              type="number"
+              className="cashier-form input"
+              value={transactionId}
+              onChange={(e) => {
+                setTransactionId(e.target.value);
+                setManualError("");
+                setManualSuccess("");
+              }}
+              placeholder="ID#"
+              style={{ width: "100%", padding: "0.7rem", borderRadius: "8px", border: "2px solid var(--color-border)" }}
+            />
+          </div>
+          <button
+            type="submit"
+            className="cashier-button"
+            style={{ padding: "0.7rem 1.5rem", whiteSpace: "nowrap" }}
+          >
+            Process
+          </button>
+        </form>
+        {manualError && (
+          <div className="cashier-alert error" style={{ marginTop: "1rem" }}>
+            {manualError}
+          </div>
+        )}
+        {manualSuccess && (
+          <div className="cashier-alert success" style={{ marginTop: "1rem" }}>
+            {manualSuccess}
+          </div>
+        )}
+      </div>
+
+      {/* Pending Redemption Requests List */}
+      <h2 className="section-title">Pending Redemption Requests</h2>
       <div className="cashier-form-container">
         {requests.length === 0 ? (
           <p>No pending redemption requests.</p>
@@ -51,6 +127,8 @@ export default function CashierRedeem() {
             {requests.map(req => (
               <div key={req.id} className="redeem-card">
                 
+                <strong>Transaction ID:</strong> {req.id}
+                <br />
                 <strong>User:</strong> {req.user?.utorid}
                 <br />
 
