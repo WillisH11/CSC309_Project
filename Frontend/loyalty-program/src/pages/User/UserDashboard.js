@@ -5,25 +5,39 @@ import api from "../../services/api";
 import "./UserDashboard.css";
 
 export default function UserDashboard() {
-  const { user, setUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-useEffect(() => {
-  async function loadDashboard() {
-    try {
-      // ONLY load transactions here
-      const tx = await api.get("/users/me/transactions?limit=5&page=1");
-      setRecentTransactions(tx.results || []);
-    } catch (err) {
-      console.error("Dashboard load error:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
+  useEffect(() => {
+    let isMounted = true;
 
-  loadDashboard();
-}, []);
+    async function loadDashboard() {
+      try {
+        // Refresh user data to get latest points
+        await refreshUser();
+        
+        // Load transactions
+        const tx = await api.get("/users/me/transactions?limit=5&page=1");
+        if (isMounted) {
+          setRecentTransactions(tx.results || []);
+        }
+      } catch (err) {
+        console.error("Dashboard load error:", err);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadDashboard();
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   if (loading || !user) {
     return (
@@ -74,6 +88,7 @@ useEffect(() => {
         ) : (
           <div>
             {recentTransactions.map((tx) => {
+              const isPendingRedemption = tx.type === "redemption" && tx.relatedId === null;
               const displayAmount =
                 tx.type === "redemption"
                   ? -tx.redeemed
@@ -84,6 +99,8 @@ useEffect(() => {
                   ? "fa-shopping-bag"
                   : tx.type === "transfer"
                   ? "fa-exchange-alt"
+                  : tx.type === "redemption"
+                  ? "fa-ticket-alt"
                   : "fa-gift";
 
               return (
@@ -107,6 +124,17 @@ useEffect(() => {
                     <div>
                       <strong style={{ textTransform: "capitalize", display: "block" }}>
                         {tx.type}
+                        {isPendingRedemption && (
+                          <span style={{ 
+                            marginLeft: "8px", 
+                            fontSize: "0.75rem", 
+                            color: "#FFA239",
+                            fontWeight: "normal",
+                            fontStyle: "italic"
+                          }}>
+                            (Pending)
+                          </span>
+                        )}
                       </strong>
                       <small style={{ color: "#999" }}>
                         {new Date(tx.createdAt).toLocaleDateString()}
@@ -121,10 +149,21 @@ useEffect(() => {
                       fontSize: "1.1rem",
                       minWidth: "50px",
                       textAlign: "right",
+                      opacity: isPendingRedemption ? 0.6 : 1,
                     }}
                   >
                     {displayAmount > 0 ? "+" : ""}
                     {displayAmount}
+                    {isPendingRedemption && (
+                      <div style={{ 
+                        fontSize: "0.7rem", 
+                        color: "#999",
+                        fontWeight: "normal",
+                        marginTop: "2px"
+                      }}>
+                        (Pending)
+                      </div>
+                    )}
                   </div>
                 </div>
               );
