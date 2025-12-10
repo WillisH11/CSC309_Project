@@ -4,6 +4,7 @@ import api from "../../services/api";
 import { useAuth } from "../../Contexts/AuthContext";
 import "./Manager.css";
 import "./ManagerEvents.css";
+import MessageModal from "../../Components/MessageModal";
 
 export default function ManagerEvents() {
   const navigate = useNavigate();
@@ -35,6 +36,9 @@ export default function ManagerEvents() {
   const [showPointsModal, setShowPointsModal] = useState(false);
   const [showAttendeesModal, setShowAttendeesModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+
+  // Permission Modal
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
 
   // Form data for create/edit
   const [formData, setFormData] = useState({
@@ -343,6 +347,12 @@ export default function ManagerEvents() {
 
   // Handle Remove Guest
   const handleRemoveGuest = async (guestUserId) => {
+    // Only managers can remove guests
+    if (!isManager) {
+      setShowPermissionModal(true);
+      return;
+    }
+
     if (!window.confirm("Are you sure you want to remove this attendee?")) {
       return;
     }
@@ -485,8 +495,7 @@ export default function ManagerEvents() {
 
     if (
       !window.confirm(
-        `Award ${points} points to all ${
-          selectedEvent.guests?.length || 0
+        `Award ${points} points to all ${selectedEvent.guests?.length || 0
         } attendees?`
       )
     ) {
@@ -668,9 +677,8 @@ export default function ManagerEvents() {
                       Event Name
                       {sortBy === "name" && (
                         <i
-                          className={`fas fa-sort-${
-                            sortOrder === "asc" ? "up" : "down"
-                          }`}
+                          className={`fas fa-sort-${sortOrder === "asc" ? "up" : "down"
+                            }`}
                         ></i>
                       )}
                       {sortBy !== "name" && <i className="fas fa-sort"></i>}
@@ -685,9 +693,8 @@ export default function ManagerEvents() {
                       Date & Time
                       {sortBy === "date" && (
                         <i
-                          className={`fas fa-sort-${
-                            sortOrder === "asc" ? "up" : "down"
-                          }`}
+                          className={`fas fa-sort-${sortOrder === "asc" ? "up" : "down"
+                            }`}
                         ></i>
                       )}
                       {sortBy !== "date" && <i className="fas fa-sort"></i>}
@@ -705,9 +712,8 @@ export default function ManagerEvents() {
                       Status
                       {sortBy === "status" && (
                         <i
-                          className={`fas fa-sort-${
-                            sortOrder === "asc" ? "up" : "down"
-                          }`}
+                          className={`fas fa-sort-${sortOrder === "asc" ? "up" : "down"
+                            }`}
                         ></i>
                       )}
                       {sortBy !== "status" && <i className="fas fa-sort"></i>}
@@ -1182,7 +1188,7 @@ export default function ManagerEvents() {
               <div className="organizer-section">
                 <h4>Current Organizers</h4>
                 {selectedEvent.organizers &&
-                selectedEvent.organizers.length > 0 ? (
+                  selectedEvent.organizers.length > 0 ? (
                   <div className="organizer-list">
                     {selectedEvent.organizers.map((org) => (
                       <div key={org.userId} className="organizer-item">
@@ -1282,36 +1288,36 @@ export default function ManagerEvents() {
 
                     {/* Attendee Stats */}
                     <div className="attendee-stats">
-                <div className="stat-box">
-                  <i className="fas fa-users"></i>
-                  <div>
-                    <strong>Total Attendees</strong>
-                    <p>{selectedEvent.guests?.length || 0}</p>
-                  </div>
-                </div>
-                <div className="stat-box">
-                  <i className="fas fa-chair"></i>
-                  <div>
-                    <strong>Capacity</strong>
-                    <p>{selectedEvent.capacity || "Unlimited"}</p>
-                  </div>
-                </div>
-                <div className="stat-box">
-                  <i className="fas fa-percentage"></i>
-                  <div>
-                    <strong>Fill Rate</strong>
-                    <p>
-                      {selectedEvent.capacity
-                        ? `${Math.round(
-                            ((selectedEvent.guests?.length || 0) /
-                              selectedEvent.capacity) *
-                              100
-                          )}%`
-                        : "N/A"}
-                    </p>
-                  </div>
-                </div>
-              </div>
+                      <div className="stat-box">
+                        <i className="fas fa-users"></i>
+                        <div>
+                          <strong>Total Attendees</strong>
+                          <p>{selectedEvent.guests?.length || 0}</p>
+                        </div>
+                      </div>
+                      <div className="stat-box">
+                        <i className="fas fa-chair"></i>
+                        <div>
+                          <strong>Capacity</strong>
+                          <p>{selectedEvent.capacity || "Unlimited"}</p>
+                        </div>
+                      </div>
+                      <div className="stat-box">
+                        <i className="fas fa-percentage"></i>
+                        <div>
+                          <strong>Fill Rate</strong>
+                          <p>
+                            {selectedEvent.capacity
+                              ? `${Math.round(
+                                ((selectedEvent.guests?.length || 0) /
+                                  selectedEvent.capacity) *
+                                100
+                              )}%`
+                              : "N/A"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
 
                     {/* Add Guest Form */}
                     {!eventHasPassed && (
@@ -1497,7 +1503,7 @@ export default function ManagerEvents() {
                         min="1"
                         max={Math.floor(
                           selectedEvent.pointsRemain /
-                            selectedEvent.guests.length
+                          selectedEvent.guests.length
                         )}
                         disabled={awardingPoints}
                       />
@@ -1589,19 +1595,18 @@ export default function ManagerEvents() {
                 </div>
               )}
             </div>
-
-            <div className="modal-actions">
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => setShowPointsModal(false)}
-              >
-                Close
-              </button>
-            </div>
           </div>
         </div>
       )}
+
+      {/* Permission Denied Modal */}
+      <MessageModal
+        isOpen={showPermissionModal}
+        onClose={() => setShowPermissionModal(false)}
+        title="Permission Denied"
+        message="Organizers cannot remove guests from an event."
+        type="error"
+      />
     </div>
   );
 }

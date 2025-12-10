@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../../services/api";
 import "./ManagerPromotions.css";
+import MessageModal from "../../Components/MessageModal";
 
 function promoisExpired(promo) {
   if (!promo?.endTime) return false;
@@ -46,6 +47,39 @@ export default function ManagerPromotions() {
 
   const [errors, setErrors] = useState({});
   const [hasStarted, setHasStarted] = useState(false);
+
+  // Modal State
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    onConfirm: null
+  });
+
+  const showMessage = (title, message, type = "info") => {
+    setModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type,
+      onConfirm: null
+    });
+  };
+
+  const showConfirm = (title, message, onConfirm) => {
+    setModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type: "warning",
+      onConfirm
+    });
+  };
+
+  const closeModal = () => {
+    setModalConfig(prev => ({ ...prev, isOpen: false }));
+  };
 
   useEffect(() => {
     loadPromotions();
@@ -98,13 +132,18 @@ export default function ManagerPromotions() {
   }
 
   async function deletePromotion(id) {
-    if (!window.confirm("Delete this promotion?")) return;
-    try {
-      await api.delete(`/promotions/${id}`);
-      loadPromotions();
-    } catch (err) {
-      alert(err.error || "Failed to delete promotion");
-    }
+    showConfirm(
+      "Delete Promotion",
+      "Are you sure you want to delete this promotion?",
+      async () => {
+        try {
+          await api.delete(`/promotions/${id}`);
+          loadPromotions();
+        } catch (err) {
+          showMessage("Error", err.error || "Failed to delete promotion", "error");
+        }
+      }
+    );
   }
 
   // =========================
@@ -161,7 +200,7 @@ export default function ManagerPromotions() {
   // CREATE PROMOTION
   // =========================
   async function handleCreatePromotion() {
-    if (!validateForm()) return alert("Fix validation errors.");
+    if (!validateForm()) return showMessage("Validation Error", "Please fix the errors in the form.", "error");
 
     try {
       await api.post("/promotions", {
@@ -175,12 +214,12 @@ export default function ManagerPromotions() {
         minSpending: minSpending ? Number(minSpending) : null
       });
 
-      alert("Promotion created!");
+      showMessage("Success", "Promotion created successfully!", "success");
       resetForm();
       loadPromotions();
     } catch (err) {
       console.error(err);
-      alert(err.error || "Failed to create promotion.");
+      showMessage("Error", err.error || "Failed to create promotion.", "error");
     }
   }
 
@@ -250,12 +289,12 @@ export default function ManagerPromotions() {
 
     try {
       await api.patch(`/promotions/${editId}`, body);
-      alert("Promotion updated!");
+      showMessage("Success", "Promotion updated successfully!", "success");
       resetForm();
       loadPromotions();
     } catch (err) {
       console.error(err);
-      alert(err.error || "Failed to update promotion");
+      showMessage("Error", err.error || "Failed to update promotion", "error");
     }
   }
 
@@ -332,9 +371,9 @@ export default function ManagerPromotions() {
 
             <div className="promo-card-footer">
               <button
-              className={`promo-btn edit ${promoisExpired(p) ? "disabled" : ""}`}
-              disabled={promoisExpired(p)}
-              onClick={() => !promoisExpired(p) && openEditModal(p)}
+                className={`promo-btn edit ${promoisExpired(p) ? "disabled" : ""}`}
+                disabled={promoisExpired(p)}
+                onClick={() => !promoisExpired(p) && openEditModal(p)}
               >
                 Edit
               </button>
@@ -403,6 +442,17 @@ export default function ManagerPromotions() {
           hasStarted={hasStarted}
         />
       )}
+
+
+
+      <MessageModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        onConfirm={modalConfig.onConfirm}
+      />
 
     </div>
   );
