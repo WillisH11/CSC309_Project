@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../../services/api";
 import { useAuth } from "../../Contexts/AuthContext";
 import "./ManagerPromotions.css";
+import MessageModal from "../../Components/MessageModal";
 
 /* ---------- Helpers ---------- */
 function promoIsExpired(promo) {
@@ -168,7 +169,7 @@ export default function ManagerPromotions() {
 
   /* ---------- Create Promotion ---------- */
   async function handleCreatePromotion() {
-    if (!validateForm()) return alert("Fix validation errors.");
+    if (!validateForm()) return showMessage("Validation Error", "Please fix the errors in the form.", "error");
 
     try {
       await api.post("/promotions", {
@@ -183,12 +184,12 @@ export default function ManagerPromotions() {
         targetRole: targetRole
       });
 
-      alert("Promotion created!");
+      showMessage("Success", "Promotion created successfully!", "success");
       resetForm();
       loadPromotions();
     } catch (err) {
       console.error(err);
-      alert(err.error || "Failed to create promotion.");
+      showMessage("Error", err.error || "Failed to create promotion.", "error");
     }
   }
 
@@ -246,7 +247,7 @@ export default function ManagerPromotions() {
 
     try {
       await api.patch(`/promotions/${editId}`, body);
-      alert("Promotion updated!");
+      showMessage("Success", "Promotion updated successfully!", "success");
       resetForm();
       loadPromotions();
     } catch (err) {

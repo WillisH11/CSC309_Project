@@ -509,6 +509,49 @@ app.patch('/users/me/password', jwtMiddleware, async (req, res) => {
         const user = await prisma.user.findUnique({
             where: { id: req.auth.id }
         });
+// Find user by utorid
+app.get("/users/find", jwtMiddleware, async (req, res) => {
+  const { utorid } = req.query;
+
+  if (!utorid) {
+    return res.status(400).json({ error: "Missing utorid" });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { utorid },
+    select: { id: true, utorid: true, name: true },
+  });
+
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  res.json(user);
+});
+
+// Search user for transfer
+app.get("/users/search-transfer", jwtMiddleware, async (req, res) => {
+  const { utorid } = req.query;
+
+  if (!utorid) return res.status(400).json({ error: "Missing UTORid" });
+
+  const user = await prisma.user.findUnique({
+    where: { utorid },
+    select: { id: true, utorid: true, name: true },
+  });
+
+  if (!user) return res.status(404).json({ error: "User not found" });
+
+  res.json(user);
+});
+
+// List users
+app.get("/users", jwtMiddleware, async (req, res) => {
+  try {
+    // Check authorization (Manager+)
+    if (!["manager", "superuser"].includes(req.auth.role)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
 
         // Verify old password
         const validPassword = await bcrypt.compare(oldPassword, user.password);
@@ -1573,6 +1616,43 @@ app.patch('/transactions/:transactionId/suspicious', jwtMiddleware, async (req, 
         const promotionIdList = updatedTransaction.promotions
             .map(p => p.promotionId)
             .filter(id => id !== null && typeof id === 'number');
+// TRANSACTIONS
+
+// Get pending redemption transactions
+app.get("/transactions/redemption/pending", jwtMiddleware, async (req, res) => {
+  try {
+    if (!["cashier", "manager", "superuser"].includes(req.auth.role)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const pending = await prisma.transaction.findMany({
+      where: {
+        type: "redemption",
+        relatedId: null,
+      },
+      include: {
+        user: {
+          select: { utorid: true, name: true },
+        },
+        createdBy: {
+          select: { utorid: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    res.json({ results: pending });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Create purchase or adjustment transaction
+app.post("/transactions", jwtMiddleware, async (req, res) => {
+  try {
+    const { type, utorid, spent, amount, remark, promotionIds, relatedId } =
+      req.body;
 
         // Format response based on transaction type
         const response = {
@@ -1621,6 +1701,10 @@ app.patch('/transactions/:transactionId/processed', jwtMiddleware, async (req, r
 
         if (!transaction) {
             return res.status(404).json({ error: "Transaction not found" });
+        if (existingUsage.length > 0) {
+          return res.status(400).json({
+            error: "User has already used one or more of these promotions",
+          });
         }
 
         // Verify it's a redemption 
@@ -2163,6 +2247,14 @@ app.get('/events', jwtMiddleware, async (req, res) => {
                     }
                 ]
             };
+          await prisma.user.update({
+            where: { id: transaction.userId },
+            data: {
+              points: {
+                increment: earnedPoints,
+              },
+            },
+          });
         }
 
         // Get events
@@ -2641,6 +2733,13 @@ app.delete('/events/:eventId/organizers/:userId', jwtMiddleware, async (req, res
         if (!event) {
             return res.status(404).json({ error: "Event not found" });
         }
+    // Check if user is an organizer
+    const isOrganizer = event.organizers.some((o) => o.userId === req.auth.id);
+
+    // Regular users can only view published events (unless they are organizers)
+    if (req.auth.role === "regular" && !event.published && !isOrganizer) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
 
         // Check authorization (Manager+ only, NOT organizers)
         if (!['manager', 'superuser'].includes(req.auth.role)) {
@@ -2703,6 +2802,19 @@ app.post('/events/:eventId/guests/me', jwtMiddleware, async (req, res) => {
         // Event must be published for regular users to RSVP
         if (!event.published && req.auth.role === 'regular') {
             return res.status(403).json({ error: "Event is not published" });
+    if (capacity !== undefined) {
+      if (capacity === null) {
+        updateData.capacity = null;
+      } else {
+        const cap = parseInt(capacity);
+        if (isNaN(cap) || cap <= 0) {
+          return res.status(400).json({ error: "Invalid capacity" });
+        }
+        // Cannot reduce capacity below current guest count
+        if (cap < event.guests.length) {
+          return res.status(400).json({
+            error: "Capacity cannot be less than current number of guests",
+          });
         }
 
         // Check if event has already ended
@@ -3508,6 +3620,15 @@ app.get('/promotions', jwtMiddleware, async (req, res) => {
                 }))
             });
         }
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ error: "Invalid date format" });
+    }
+
+    if (start < new Date()) {
+      return res
+        .status(400)
+        .json({ error: "Start time cannot be in the past" });
+    }
 
     } catch (error) {
         console.error(error);
@@ -3702,6 +3823,22 @@ app.patch('/promotions/:promotionId', jwtMiddleware, async (req, res) => {
             type: updatedPromotion.type === 'onetime' ? 'one-time' : updatedPromotion.type,
             targetRole: updatedPromotion.targetRole || 'all'
         };
+    // Check if trying to update certain fields after promotion has started
+    if (hasStarted) {
+      if (
+        name !== undefined ||
+        description !== undefined ||
+        type !== undefined ||
+        startTime !== undefined ||
+        minSpending !== undefined ||
+        rate !== undefined ||
+        points !== undefined
+      ) {
+        return res.status(400).json({
+          error: "Cannot update these fields after promotion has started",
+        });
+      }
+    }
 
         if (description !== undefined) response.description = updatedPromotion.description;
         if (startTime !== undefined) response.startTime = updatedPromotion.startTime.toISOString();

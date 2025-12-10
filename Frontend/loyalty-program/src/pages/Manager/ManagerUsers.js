@@ -3,6 +3,7 @@ import { useAuth } from "../../Contexts/AuthContext";
 import api from "../../services/api";
 import "./ManagerUsers.css";
 import "../../Components/Button.css";
+import MessageModal from "../../Components/MessageModal";
 
 export default function ManagerUsers() {
   const { user: currentUser } = useAuth();
@@ -11,6 +12,27 @@ export default function ManagerUsers() {
   const [error, setError] = useState("");
   const [actionLoading, setActionLoading] = useState({});
   const [selectedUser, setSelectedUser] = useState(null);
+
+  // Modal State
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info"
+  });
+
+  const showMessage = (title, message, type = "info") => {
+    setModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type
+    });
+  };
+
+  const closeModal = () => {
+    setModalConfig(prev => ({ ...prev, isOpen: false }));
+  };
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -105,7 +127,7 @@ export default function ManagerUsers() {
         setSelectedUser({ ...selectedUser, verified: true });
       }
     } catch (err) {
-      alert(err.message || "Failed to verify user");
+      showMessage("Error", err.message || "Failed to verify user", "error");
     } finally {
       setActionLoading({ ...actionLoading, [`verify-${userId}`]: false });
     }
@@ -124,7 +146,7 @@ export default function ManagerUsers() {
         setSelectedUser({ ...selectedUser, role: newRole });
       }
     } catch (err) {
-      alert(err.message || "Failed to change role");
+      showMessage("Error", err.message || "Failed to change role", "error");
     } finally {
       setActionLoading({ ...actionLoading, [`role-${userId}`]: false });
     }
@@ -144,7 +166,7 @@ export default function ManagerUsers() {
         setSelectedUser({ ...selectedUser, suspicious: newStatus });
       }
     } catch (err) {
-      alert(err.message || "Failed to update suspicious status");
+      showMessage("Error", err.message || "Failed to update suspicious status", "error");
     } finally {
       setActionLoading({ ...actionLoading, [`suspicious-${userId}`]: false });
     }
@@ -548,6 +570,14 @@ export default function ManagerUsers() {
           </div>
         </div>
       )}
+
+      <MessageModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+      />
     </div>
   );
 }

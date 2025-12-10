@@ -3,12 +3,17 @@
    ========================================= */
 :root {
   /* Core Brand Colors */
-  --color-brand-red:    #FF5656; /* Navbar, Headers, Alerts */
+  --color-brand-red:    #FF5656; /* Navbar, Alerts, Full States */
   --color-brand-orange: #FFA239; /* Primary Buttons, Highlights */
   --color-brand-blue:   #8CE4FF; /* Balance Cards, Info */
   --color-brand-yellow: #FEEE91; /* Accents, Icons, Badges */
 
-  /* Functional Colors */
+  /* Functional Colors (Added for Consistency) */
+  --color-success:      #28a745; /* Verified status, Success messages */
+  --color-danger-dark:  #dc3545; /* SuperAdmin, Delete actions */
+  --color-text-dark:    #343a40; /* Darker headings */
+
+  /* Base UI Colors */
   --color-bg:           #F4F5F7; 
   --color-text-main:    #333333; 
   --color-text-muted:   #666666; 
@@ -29,7 +34,7 @@
 
 body {
   margin: 0;
-  /* Font Stack */
+  /* Primary Font Stack */
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -43,13 +48,24 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
-/* =========================================
-   3. GLOBAL UTILITY CLASSES
-   ========================================= */
+h1, h2, h3, .navbar-logo, .btn {
+  font-family: 'Poppins', sans-serif; 
+}
 
 a {
   text-decoration: none;
   color: inherit;
+}
+
+/* =========================================
+   3. GLOBAL UTILITY CLASSES
+   ========================================= */
+
+/* Unified Container: Replaces specific widths in other files */
+.page-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
 }
 
 /* Standard Card Style */
@@ -60,6 +76,27 @@ a {
   box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
 
-h1, h2, h3, .navbar-logo, .btn {
-  font-family: 'Poppins', sans-serif; 
+/* Unified Form Input: Replaces inconsistent inputs in Redeem/ManagerEvents */
+.form-input-global {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  color: var(--color-text-main);
+  font-family: 'Inter', sans-serif;
+}
+
+.form-input-global:focus {
+  outline: none;
+  border-color: var(--color-brand-orange);
+  box-shadow: 0 0 0 3px rgba(255, 162, 57, 0.15);
+}
+
+/* Standard Loading/Empty States */
+.state-message {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--color-text-muted);
 }
