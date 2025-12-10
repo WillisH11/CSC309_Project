@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../Contexts/AuthContext";
 import "./Login.css";
 import "../../Components/Button.css";
@@ -56,6 +56,12 @@ export default function Login() {
             Login
           </button>
         </form>
+
+        <div className="login-footer">
+          <Link to="/forgot-password" className="forgot-password-link">
+            Forgot your password?
+          </Link>
+        </div>
       </div>
     </div>
   );

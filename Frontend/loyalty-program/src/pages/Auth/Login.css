@@ -54,5 +54,24 @@
 .form-group input:focus {
     outline: none;
     border-color: var(--color-brand-blue);
-    box-shadow: 0 0 0 3px rgba(140, 228, 255, 0.3); 
+    box-shadow: 0 0 0 3px rgba(140, 228, 255, 0.3);
+}
+
+.login-footer {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.forgot-password-link {
+    color: var(--color-brand-blue);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+}
+
+.forgot-password-link:hover {
+    color: var(--color-brand-red);
+    text-decoration: underline;
 }

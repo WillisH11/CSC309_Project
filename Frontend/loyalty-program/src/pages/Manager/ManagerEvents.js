@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { useAuth } from "../../Contexts/AuthContext";
 import "./Manager.css";
 import "./ManagerEvents.css";
 
 export default function ManagerEvents() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Check if user is a manager (can create/delete events and add organizers)
+  const isManager = user && ["manager", "superuser"].includes(user.role);
 
   // State
   const [events, setEvents] = useState([]);
@@ -21,7 +26,7 @@ export default function ManagerEvents() {
   const [sortOrder, setSortOrder] = useState("desc"); // "asc" or "desc"
 
   // Filtering
-  const [filter, setFilter] = useState("all"); // "all", "published", "draft"
+  const [filter, setFilter] = useState("all"); // "all", "published", "draft", "myevents"
 
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -83,6 +88,10 @@ export default function ManagerEvents() {
       } else if (filter === "draft") {
         // Fetch only unpublished
         const data = await api.get(`/events?limit=100&page=1&published=false`);
+        allEvents = data.results || [];
+      } else if (filter === "myevents") {
+        // Fetch only events where user is an organizer
+        const data = await api.get(`/events?limit=100&page=1&organizerOnly=true`);
         allEvents = data.results || [];
       }
 
@@ -557,11 +566,22 @@ export default function ManagerEvents() {
           >
             <i className="fas fa-edit"></i> Drafts
           </button>
+          {user && user.isOrganizer && (
+            <button
+              type="button"
+              className={`filter-btn ${filter === "myevents" ? "active" : ""}`}
+              onClick={() => handleFilterChange("myevents")}
+            >
+              <i className="fas fa-user-circle"></i> My Events
+            </button>
+          )}
         </div>
 
-        <button type="button" className="btn-primary" onClick={handleCreate}>
-          <i className="fas fa-plus-circle"></i> Create New Event
-        </button>
+        {isManager && (
+          <button type="button" className="btn-primary" onClick={handleCreate}>
+            <i className="fas fa-plus-circle"></i> Create New Event
+          </button>
+        )}
       </div>
 
       {/* Loading State */}
@@ -738,14 +758,16 @@ export default function ManagerEvents() {
                           >
                             <i className="fas fa-edit"></i>
                           </button>
-                          <button
-                            type="button"
-                            className="btn-icon btn-organizers"
-                            onClick={() => handleManageOrganizers(event)}
-                            title="Manage Organizers"
-                          >
-                            <i className="fas fa-users-cog"></i>
-                          </button>
+                          {isManager && (
+                            <button
+                              type="button"
+                              className="btn-icon btn-organizers"
+                              onClick={() => handleManageOrganizers(event)}
+                              title="Manage Organizers"
+                            >
+                              <i className="fas fa-users-cog"></i>
+                            </button>
+                          )}
                           <button
                             type="button"
                             className="btn-icon btn-points"
@@ -757,14 +779,16 @@ export default function ManagerEvents() {
                           >
                             <i className="fas fa-award"></i>
                           </button>
-                          <button
-                            type="button"
-                            className="btn-icon btn-delete"
-                            onClick={() => handleDelete(event.id, event.name)}
-                            title="Delete"
-                          >
-                            <i className="fas fa-trash"></i>
-                          </button>
+                          {isManager && (
+                            <button
+                              type="button"
+                              className="btn-icon btn-delete"
+                              onClick={() => handleDelete(event.id, event.name)}
+                              title="Delete"
+                            >
+                              <i className="fas fa-trash"></i>
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1117,14 +1141,16 @@ export default function ManagerEvents() {
                           <strong>{org.user?.name || "Unknown"}</strong>
                           <small> ({org.user?.utorid})</small>
                         </div>
-                        <button
-                          type="button"
-                          className="btn-icon btn-delete"
-                          onClick={() => handleRemoveOrganizer(org.userId)}
-                          title="Remove"
-                        >
-                          <i className="fas fa-times"></i>
-                        </button>
+                        {isManager && (
+                          <button
+                            type="button"
+                            className="btn-icon btn-delete"
+                            onClick={() => handleRemoveOrganizer(org.userId)}
+                            title="Remove"
+                          >
+                            <i className="fas fa-times"></i>
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -1134,26 +1160,28 @@ export default function ManagerEvents() {
               </div>
 
               {/* Add Organizer */}
-              <div className="organizer-section">
-                <h4>Add Organizer</h4>
-                <div className="add-organizer-form">
-                  <select
-                    value={selectedUserId}
-                    onChange={(e) => setSelectedUserId(e.target.value)}
-                    className="organizer-select"
-                  >
-                    <option value="">Select a user...</option>
-                    {availableUsers.map((user) => (
-                      <option key={user.id} value={user.utorid}>
-                        {user.name} ({user.utorid}) - {user.role}
-                      </option>
-                    ))}
-                  </select>
-                  <button type="button" className="btn-primary" onClick={handleAddOrganizer}>
-                    <i className="fas fa-plus"></i> Add
-                  </button>
+              {isManager && (
+                <div className="organizer-section">
+                  <h4>Add Organizer</h4>
+                  <div className="add-organizer-form">
+                    <select
+                      value={selectedUserId}
+                      onChange={(e) => setSelectedUserId(e.target.value)}
+                      className="organizer-select"
+                    >
+                      <option value="">Select a user...</option>
+                      {availableUsers.map((user) => (
+                        <option key={user.id} value={user.utorid}>
+                          {user.name} ({user.utorid}) - {user.role}
+                        </option>
+                      ))}
+                    </select>
+                    <button type="button" className="btn-primary" onClick={handleAddOrganizer}>
+                      <i className="fas fa-plus"></i> Add
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="modal-actions">
