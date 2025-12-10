@@ -31,29 +31,31 @@ export default function Events() {
       setLoading(true);
       setError(null);
 
-      // For "My Events", fetch all events with guest details
-      if (currentFilter === "myevents") {
-        const data = await api.get(`/events?limit=100&page=1&published=true`);
-        let allEvents = data.results || [];
+      // Fetch all published events first
+      const data = await api.get(`/events?limit=100&page=1&published=true`);
+      let fetchedEvents = data.results || [];
 
-        // Fetch full details for each event to get guest lists
-        const eventsWithGuests = await Promise.all(
-          allEvents.map(async (event) => {
-            try {
-              const fullEvent = await api.get(`/events/${event.id}`);
-              return fullEvent;
-            } catch (err) {
-              console.error(`Failed to fetch event ${event.id}:`, err);
-              return null;
-            }
-          })
-        );
+      // Fetch full details for events (with guest lists) - handle errors gracefully
+      const eventsWithGuests = await Promise.all(
+        fetchedEvents.map(async (event) => {
+          try {
+            const fullEvent = await api.get(`/events/${event.id}`);
+            return fullEvent;
+          } catch (err) {
+            // Silently handle permission errors - just return the basic event info
+            return event;
+          }
+        })
+      );
+
+      // For "My Events", filter to user's events
+      if (currentFilter === "myevents") {
 
         // Filter to only events where current user is attending
         const myEvents = eventsWithGuests.filter(
           (event) =>
             event &&
-            event.guests?.some((guest) => guest.id === user?.id)
+            event.guests?.some((guest) => guest.id === user?.id || guest.userId === user?.id)
         );
 
         // Manually paginate
@@ -65,20 +67,15 @@ export default function Events() {
         setEvents(paginatedEvents);
         setTotalPages(totalPagesCalc);
       } else {
-        // Normal flow for other filters
-        // Fetch all published events
-        const data = await api.get(`/events?limit=100&page=1&published=true`);
-        let allEvents = data.results || [];
-
         // Filter events client-side based on filter selection
-        let filteredEvents = allEvents;
+        let filteredEvents = eventsWithGuests;
 
         if (currentFilter === "upcoming") {
-          filteredEvents = allEvents.filter(
+          filteredEvents = eventsWithGuests.filter(
             (event) => new Date(event.startTime) > new Date()
           );
         } else if (currentFilter === "past") {
-          filteredEvents = allEvents.filter(
+          filteredEvents = eventsWithGuests.filter(
             (event) => new Date(event.endTime) < new Date()
           );
         }
@@ -89,21 +86,7 @@ export default function Events() {
         const paginatedEvents = filteredEvents.slice(startIdx, endIdx);
         const totalPagesCalc = Math.ceil(filteredEvents.length / 4);
 
-        // Fetch full details for paginated events to get guest lists
-        // This allows us to show "Attending" badge on events
-        const eventsWithGuests = await Promise.all(
-          paginatedEvents.map(async (event) => {
-            try {
-              const fullEvent = await api.get(`/events/${event.id}`);
-              return fullEvent;
-            } catch (err) {
-              console.error(`Failed to fetch event ${event.id}:`, err);
-              return event; // Return original if fetch fails
-            }
-          })
-        );
-
-        setEvents(eventsWithGuests);
+        setEvents(paginatedEvents);
         setTotalPages(totalPagesCalc);
       }
     } catch (err) {

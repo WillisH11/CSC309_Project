@@ -2,40 +2,31 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../Contexts/AuthContext";
 import api from "../../services/api";
+import PointsTimelineChart from "../../Components/Charts/PointsTimelineChart";
+import PointsBreakdownChart from "../../Components/Charts/PointsBreakdownChart";
 import "./UserDashboard.css";
 
 export default function UserDashboard() {
   const { user, setUser } = useAuth();
   const [recentTransactions, setRecentTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [allTransactions, setAllTransactions] = useState([]);
 
-useEffect(() => {
-  async function loadDashboard() {
-    try {
-      // ONLY load transactions here
-      const tx = await api.get("/users/me/transactions?limit=5&page=1");
-      setRecentTransactions(tx.results || []);
-    } catch (err) {
-      console.error("Dashboard load error:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
+  useEffect(() => {
+    // Fetch recent transactions for activity list
+    api
+      .get("/users/me/transactions?limit=5&page=1")
+      .then((data) => setRecentTransactions(data.results || []))
+      .catch((err) => console.error(err));
 
-  loadDashboard();
-}, []);
-
-  if (loading || !user) {
-    return (
-      <div className="dashboard-container">
-        <h2>Loading Dashboard...</h2>
-      </div>
-    );
-  }
+    // Fetch more transactions for charts (last 30 days worth)
+    api
+      .get("/users/me/transactions?limit=100&page=1")
+      .then((data) => setAllTransactions(data.results || []))
+      .catch((err) => console.error(err));
+  }, []);
 
   return (
     <div className="dashboard-container">
-
       {/* BALANCE CARD */}
       <div className="balance-card">
         <h1>Welcome back, {user.name || user.utorid}!</h1>
@@ -43,7 +34,37 @@ useEffect(() => {
         <div className="balance-amount">{user.points ?? 0} pts</div>
       </div>
 
-      {/* RECENT ACTIVITY */}
+      {/* 2. ANALYTICS: Charts Grid */}
+      <div className="charts-grid">
+        {/* Points Timeline Chart */}
+        <div className="chart-card">
+          <h2 style={{ marginBottom: "1rem" }}>
+            <i
+              className="fas fa-chart-line"
+              style={{ marginRight: "10px", color: "#FFA239" }}
+            ></i>
+            Your Points Journey
+          </h2>
+          <PointsTimelineChart
+            transactions={allTransactions}
+            currentPoints={user?.points || 0}
+          />
+        </div>
+
+        {/* Points Breakdown Chart */}
+        <div className="chart-card">
+          <h2 style={{ marginBottom: "1rem" }}>
+            <i
+              className="fas fa-chart-pie"
+              style={{ marginRight: "10px", color: "#FFA239" }}
+            ></i>
+            Where Your Points Came From
+          </h2>
+          <PointsBreakdownChart transactions={allTransactions} />
+        </div>
+      </div>
+
+      {/* 4. STATUS: Recent Activity */}
       <div className="recent-activity">
         <div
           style={{
@@ -75,9 +96,7 @@ useEffect(() => {
           <div>
             {recentTransactions.map((tx) => {
               const displayAmount =
-                tx.type === "redemption"
-                  ? -tx.redeemed
-                  : tx.amount;
+                tx.type === "redemption" ? -tx.redeemed : tx.amount;
 
               const icon =
                 tx.type === "purchase"
@@ -88,7 +107,13 @@ useEffect(() => {
 
               return (
                 <div key={tx.id} className="activity-item">
-                  <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "15px",
+                    }}
+                  >
                     <div
                       style={{
                         background: "#f0f0f0",
@@ -105,7 +130,12 @@ useEffect(() => {
                     </div>
 
                     <div>
-                      <strong style={{ textTransform: "capitalize", display: "block" }}>
+                      <strong
+                        style={{
+                          textTransform: "capitalize",
+                          display: "block",
+                        }}
+                      >
                         {tx.type}
                       </strong>
                       <small style={{ color: "#999" }}>

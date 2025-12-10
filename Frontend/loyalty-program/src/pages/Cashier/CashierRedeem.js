@@ -1,10 +1,32 @@
 import React, { useEffect, useState } from "react";
 import api from "../../services/api";
 import "./Cashier.css";
+import MessageModal from "../../Components/MessageModal";
 
 export default function CashierRedeem() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Modal State
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info"
+  });
+
+  const showMessage = (title, message, type = "info") => {
+    setModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type
+    });
+  };
+
+  const closeModal = () => {
+    setModalConfig(prev => ({ ...prev, isOpen: false }));
+  };
 
   // Fetch pending redemption requests
   async function loadRequests() {
@@ -26,10 +48,10 @@ export default function CashierRedeem() {
       // Remove from UI instantly
       setRequests(prev => prev.filter(req => req.id !== id));
 
-      alert("Redemption approved!");
+      showMessage("Success", "Redemption approved successfully!", "success");
     } catch (err) {
       console.error("Approval error:", err);
-      alert("Failed to approve redemption.");
+      showMessage("Error", "Failed to approve redemption.", "error");
     }
   }
 
@@ -50,7 +72,7 @@ export default function CashierRedeem() {
           <div>
             {requests.map(req => (
               <div key={req.id} className="redeem-card">
-                
+
                 <strong>User:</strong> {req.user?.utorid}
                 <br />
 
@@ -68,7 +90,7 @@ export default function CashierRedeem() {
                 {new Date(req.createdAt).toLocaleString()}
                 <br />
 
-                <button 
+                <button
                   className="cashier-button"
                   onClick={() => approveRequest(req.id)}
                 >
@@ -80,6 +102,14 @@ export default function CashierRedeem() {
           </div>
         )}
       </div>
+
+      <MessageModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+      />
     </div>
   );
 }

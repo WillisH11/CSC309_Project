@@ -4,6 +4,7 @@ import { useAuth } from "../../Contexts/AuthContext";
 import api from "../../services/api";
 import "./EventDetail.css";
 import "./UserDashboard.css";
+import MessageModal from "../../Components/MessageModal";
 
 export default function EventDetail() {
   const { eventId } = useParams();
@@ -16,6 +17,39 @@ export default function EventDetail() {
   const [error, setError] = useState(null);
   const [rsvpLoading, setRsvpLoading] = useState(false);
   const [isAttending, setIsAttending] = useState(false);
+
+  // Modal State
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+    onConfirm: null
+  });
+
+  const showMessage = (title, message, type = "info") => {
+    setModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type,
+      onConfirm: null
+    });
+  };
+
+  const showConfirm = (title, message, onConfirm) => {
+    setModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type: "warning",
+      onConfirm
+    });
+  };
+
+  const closeModal = () => {
+    setModalConfig(prev => ({ ...prev, isOpen: false }));
+  };
 
   // Fetch event details
   useEffect(() => {
@@ -87,7 +121,7 @@ export default function EventDetail() {
         window.scrollTo(0, scrollPosition);
       }, 0);
     } catch (err) {
-      alert(err.message || "Failed to RSVP. Please try again.");
+      showMessage("RSVP Failed", err.message || "Failed to RSVP. Please try again.", "error");
       console.error("RSVP error:", err);
     } finally {
       setRsvpLoading(false);
@@ -96,31 +130,33 @@ export default function EventDetail() {
 
   // Handle Cancel RSVP
   const handleCancelRSVP = async () => {
-    if (!window.confirm("Are you sure you want to cancel your RSVP?")) {
-      return;
-    }
+    showConfirm(
+      "Cancel RSVP",
+      "Are you sure you want to cancel your RSVP?",
+      async () => {
+        try {
+          setRsvpLoading(true);
 
-    try {
-      setRsvpLoading(true);
+          // Save current scroll position
+          const scrollPosition = window.scrollY;
 
-      // Save current scroll position
-      const scrollPosition = window.scrollY;
+          await api.delete(`/events/${eventId}/guests/me`);
 
-      await api.delete(`/events/${eventId}/guests/me`);
+          // Refresh event details
+          await fetchEventDetails();
 
-      // Refresh event details
-      await fetchEventDetails();
-
-      // Restore scroll position after render
-      setTimeout(() => {
-        window.scrollTo(0, scrollPosition);
-      }, 0);
-    } catch (err) {
-      alert(err.message || "Failed to cancel RSVP. Please try again.");
-      console.error("Cancel RSVP error:", err);
-    } finally {
-      setRsvpLoading(false);
-    }
+          // Restore scroll position after render
+          setTimeout(() => {
+            window.scrollTo(0, scrollPosition);
+          }, 0);
+        } catch (err) {
+          showMessage("Error", err.message || "Failed to cancel RSVP. Please try again.", "error");
+          console.error("Cancel RSVP error:", err);
+        } finally {
+          setRsvpLoading(false);
+        }
+      }
+    );
   };
 
   // Format date
@@ -429,6 +465,15 @@ export default function EventDetail() {
           </div>
         </div>
       </div>
+
+      <MessageModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeModal}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        onConfirm={modalConfig.onConfirm}
+      />
     </div>
   );
 }

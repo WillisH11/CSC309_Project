@@ -48,7 +48,10 @@ function App() {
         {/* Public routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:resetToken?" element={<ResetPassword />} />
+        <Route
+          path="/reset-password/:resetToken?"
+          element={<ResetPassword />}
+        />
 
         {/* Auth-protected routes */}
         <Route
@@ -86,7 +89,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        
+
         <Route
           path="/redeem-qr/:requestId"
           element={
