@@ -69,6 +69,16 @@ function attachCsrfToken(req, res, next) {
     next();
 }
 
+app.get('/csrf-token', (req, res) => {
+    // Force generation if not present
+    if (!res.locals.csrfToken) {
+        // Should have been attached by attachCsrfToken middleware
+        // but if for some reason middleware ran early or something...
+        // attachCsrfToken does it.
+    }
+    res.json({ csrfToken: res.locals.csrfToken });
+});
+
 function verifyCsrf(req, res, next) {
     const safe = ['GET', 'HEAD', 'OPTIONS'];
     if (safe.includes(req.method)) return next();

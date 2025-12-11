@@ -18,6 +18,9 @@ export const AuthProvider = ({ children }) => {
 
       api.setToken(data.token);
       setToken(data.token);        //store token in state
+      if (data.csrfToken) {
+        localStorage.setItem("csrfToken", data.csrfToken);
+      }
 
       const userData = await api.get("/users/me");
 
@@ -33,6 +36,7 @@ export const AuthProvider = ({ children }) => {
   // --Log out--
   const logout = () => {
     api.removeToken();
+    localStorage.removeItem("csrfToken");
     setToken(null);                // ⬅️ clear token
 
     setUser(null);
@@ -71,6 +75,7 @@ export const AuthProvider = ({ children }) => {
         setActiveRole(data.role || "regular");
       } catch (error) {
         api.removeToken();
+        localStorage.removeItem("csrfToken");
         setToken(null);
       } finally {
         setLoading(false);

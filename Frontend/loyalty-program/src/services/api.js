@@ -30,7 +30,10 @@ class ApiService {
     const url = `${this.baseURL}${endpoint}`;
     const token = this.getToken();
 
-    const csrfToken = getCookie("csrfToken");
+    // For cross-site requests (Frontend/Backend on different subdomains),
+    // we must read the CSRF token from storage (set by Login), as we can't read the HTTP-only cookie
+    // or the SameSite cookie across domains via document.cookie.
+    const csrfToken = localStorage.getItem("csrfToken");
 
     const config = {
       ...options,
