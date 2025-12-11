@@ -2,19 +2,20 @@
 'use strict';
 
 const port = (() => {
-    if (process.env.PORT) {
-        return parseInt(process.env.PORT, 10);
-    }
-
     const args = process.argv;
-    if (args.length === 3) {
-        const num = parseInt(args[2], 10);
-        if (!isNaN(num)) {
-            return num;
-        }
+
+    if (args.length !== 3) {
+        console.error("usage: node index.js port");
+        process.exit(1);
     }
 
-    return 3000;
+    const num = parseInt(args[2], 10);
+    if (isNaN(num)) {
+        console.error("error: argument must be an integer.");
+        process.exit(1);
+    }
+
+    return num;
 })();
 
 const express = require("express");
@@ -87,11 +88,7 @@ function populateAuthFromCookie(req, res, next) {
 
 // Middleware
 app.use(cors({
-    origin: [
-        'http://localhost:3001',
-        'http://localhost:3000',
-        process.env.FRONTEND_URL // Add production frontend URL
-    ].filter(Boolean), // Filter out undefined if env var is not set
+    origin: ['http://localhost:3001', 'http://localhost:3000'],
     credentials: true
 }));
 app.use(express.json());
@@ -127,7 +124,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }
+    limits: { fileSize: 5 * 1024 * 1024 } 
 });
 
 // Serve static files
@@ -388,66 +385,66 @@ app.post('/users', jwtMiddleware, async (req, res) => {
 
 // Get current user info
 app.get("/users/me", jwtMiddleware, async (req, res) => {
-    try {
-        const user = await prisma.user.findUnique({
-            where: { id: req.auth.id },
-            include: {
-                promotionsUsed: {
-                    select: {
-                        promotionId: true,
-                    },
-                },
-                eventsOrganizing: {
-                    select: {
-                        eventId: true,
-                    },
-                },
-            },
-        });
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.auth.id },
+      include: {
+        promotionsUsed: {
+          select: {
+            promotionId: true,
+          },
+        },
+        eventsOrganizing: {
+          select: {
+            eventId: true,
+          },
+        },
+      },
+    });
 
-        if (!user) {
-            return res.status(404).json({ error: "User not found" });
-        }
-
-        // Get available one-time promos (not used and active)
-        const usedPromotionIds = user.promotionsUsed.map((p) => p.promotionId);
-        const now = new Date();
-
-        const availablePromotions = await prisma.promotion.findMany({
-            where: {
-                type: "onetime",
-                startTime: { lte: now },
-                endTime: { gte: now },
-                id: { notIn: usedPromotionIds },
-            },
-            select: {
-                id: true,
-                name: true,
-                minSpending: true,
-                rate: true,
-                points: true,
-            },
-        });
-
-        res.json({
-            id: user.id,
-            utorid: user.utorid,
-            name: user.name,
-            email: user.email,
-            birthday: user.birthday,
-            role: user.role,
-            points: user.points,
-            createdAt: user.createdAt.toISOString(),
-            lastLogin: user.lastLogin ? user.lastLogin.toISOString() : null,
-            verified: user.verified,
-            avatarUrl: user.avatarUrl,
-            isOrganizer: user.eventsOrganizing.length > 0,
-            promotions: availablePromotions,
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal server error" });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
+
+    // Get available one-time promos (not used and active)
+    const usedPromotionIds = user.promotionsUsed.map((p) => p.promotionId);
+    const now = new Date();
+
+    const availablePromotions = await prisma.promotion.findMany({
+      where: {
+        type: "onetime",
+        startTime: { lte: now },
+        endTime: { gte: now },
+        id: { notIn: usedPromotionIds },
+      },
+      select: {
+        id: true,
+        name: true,
+        minSpending: true,
+        rate: true,
+        points: true,
+      },
+    });
+
+    res.json({
+      id: user.id,
+      utorid: user.utorid,
+      name: user.name,
+      email: user.email,
+      birthday: user.birthday,
+      role: user.role,
+      points: user.points,
+      createdAt: user.createdAt.toISOString(),
+      lastLogin: user.lastLogin ? user.lastLogin.toISOString() : null,
+      verified: user.verified,
+      avatarUrl: user.avatarUrl,
+      isOrganizer: user.eventsOrganizing.length > 0,
+      promotions: availablePromotions,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 // Update current user profile
@@ -1035,7 +1032,7 @@ app.post('/transactions', jwtMiddleware, async (req, res) => {
             });
 
             // Filter by targetRole
-            const eligiblePromotions = activePromotions.filter(promo =>
+            const eligiblePromotions = activePromotions.filter(promo => 
                 userCanUsePromotion(customerRole, promo.targetRole)
             );
 
@@ -1083,10 +1080,10 @@ app.post('/transactions', jwtMiddleware, async (req, res) => {
                 // Separate one-time promotions from automatic promotions
                 // Also filter by targetRole
                 // Note: in DB, one-time promos are stored as "onetime"
-                const onetimePromotions = requestedPromotions.filter(p =>
+                const onetimePromotions = requestedPromotions.filter(p => 
                     p.type === 'onetime' && userCanUsePromotion(customerRole, p.targetRole)
                 );
-                const automaticPromotions = requestedPromotions.filter(p =>
+                const automaticPromotions = requestedPromotions.filter(p => 
                     p.type === 'automatic' && userCanUsePromotion(customerRole, p.targetRole)
                 );
 
@@ -1096,8 +1093,8 @@ app.post('/transactions', jwtMiddleware, async (req, res) => {
                 for (const autoPromo of automaticPromotions) {
                     // Check if promotion is active
                     if (autoPromo.startTime > now || autoPromo.endTime < now) {
-                        return res.status(400).json({
-                            error: `Promotion "${autoPromo.name}" is not currently active`
+                        return res.status(400).json({ 
+                            error: `Promotion "${autoPromo.name}" is not currently active` 
                         });
                     }
                     // Note: We don't check eligibility here because automatic promotions are already
@@ -1108,7 +1105,7 @@ app.post('/transactions', jwtMiddleware, async (req, res) => {
                 // Process one-time promotions
                 if (onetimePromotions.length > 0) {
                     // Filter to only active one-time promotions
-                    const activeOnetimePromotions = onetimePromotions.filter(p =>
+                    const activeOnetimePromotions = onetimePromotions.filter(p => 
                         p.startTime <= now && p.endTime >= now
                     );
 
@@ -1121,7 +1118,7 @@ app.post('/transactions', jwtMiddleware, async (req, res) => {
                     }
 
                     const onetimePromoIds = activeOnetimePromotions.map(p => p.id);
-
+                    
                     // Check if user has already used any of these one-time promotions
                     const existingUsage = await prisma.promotionUsage.findMany({
                         where: {
@@ -1208,11 +1205,11 @@ app.post('/transactions', jwtMiddleware, async (req, res) => {
                         where: { id: { in: appliedPromotions } },
                         select: { id: true, type: true }
                     });
-
+                    
                     const onetimePromoIds = appliedPromoTypes
                         .filter(p => p.type === 'onetime')
                         .map(p => p.id);
-
+                    
                     if (onetimePromoIds.length > 0) {
                         await prisma.promotionUsage.createMany({
                             data: onetimePromoIds.map(promoId => ({
@@ -1325,7 +1322,7 @@ app.get('/transactions', jwtMiddleware, async (req, res) => {
         const orderField = req.query.orderBy || 'createdAt';
         const orderDir = req.query.orderDir === 'asc' ? 'asc' : 'desc';
         let orderBy = { createdAt: orderDir };
-
+        
         if (orderField === 'amount') {
             orderBy = { amount: orderDir };
         } else if (orderField === 'createdAt') {
@@ -1336,7 +1333,7 @@ app.get('/transactions', jwtMiddleware, async (req, res) => {
 
         // For transfers, exclude debit transactions (negative amount) - only show credit transactions
         let whereWithTransferFilter = { ...where };
-
+        
         if (whereWithTransferFilter.type === 'transfer') {
             // If filtering by transfer type, only show positive amounts (credit transactions)
             whereWithTransferFilter.amount = { gt: 0 };
@@ -1349,7 +1346,7 @@ app.get('/transactions', jwtMiddleware, async (req, res) => {
                     { type: 'transfer', amount: { gt: 0 } }
                 ]
             };
-
+            
             // If there are existing filters, combine with AND
             if (Object.keys(where).length > 0) {
                 whereWithTransferFilter = {
@@ -1411,14 +1408,14 @@ app.get('/transactions', jwtMiddleware, async (req, res) => {
                         };
                     }
                 }
-
+                
                 // Calculate promotionBonus for purchase transactions
                 let promotionBonus = 0;
                 if (t.type === 'purchase' && t.spent !== null) {
                     const basePoints = Math.round(t.spent * 4); // Base: 4 points per dollar
                     promotionBonus = Math.max(0, t.amount - basePoints); // Bonus = total - base
                 }
-
+                
                 return {
                     id: t.id,
                     type: t.type,
@@ -1827,7 +1824,7 @@ app.get('/users/me/transactions', jwtMiddleware, async (req, res) => {
 
         // Build where clause
         const where = { userId: req.auth.id };
-
+        
         // Filter by type if provided
         if (req.query.type && req.query.type !== '') {
             where.type = req.query.type;
@@ -1838,7 +1835,7 @@ app.get('/users/me/transactions', jwtMiddleware, async (req, res) => {
         if (req.query.orderBy) {
             const orderField = req.query.orderBy;
             const orderDir = req.query.orderDir === 'asc' ? 'asc' : 'desc';
-
+            
             if (orderField === 'amount') {
                 orderBy = { amount: orderDir };
             } else if (orderField === 'createdAt') {
@@ -1889,14 +1886,14 @@ app.get('/users/me/transactions', jwtMiddleware, async (req, res) => {
                         };
                     }
                 }
-
+                
                 // Calculate promotionBonus for purchase transactions
                 let promotionBonus = 0;
                 if (t.type === 'purchase' && t.spent !== null) {
                     const basePoints = Math.round(t.spent * 4); // Base: 4 points per dollar
                     promotionBonus = Math.max(0, t.amount - basePoints); // Bonus = total - base
                 }
-
+                
                 return {
                     id: t.id,
                     type: t.type,
@@ -3386,7 +3383,7 @@ app.get('/promotions', jwtMiddleware, async (req, res) => {
         const skip = (page - 1) * limit;
         const isManager = ['manager', 'superuser'].includes(req.auth.role);
         const isCashier = req.auth.role === 'cashier';
-
+        
         // Check if user wants regular view mode (even if they're a manager)
         const viewMode = req.query.viewMode; // 'regular' or 'manager' (or undefined)
         const useRegularView = viewMode === 'regular';
