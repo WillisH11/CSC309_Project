@@ -318,6 +318,24 @@ app.post('/auth/resets/:resetToken', async (req, res) => {
     }
 });
 
+// Temporary Seeding Endpoint
+const { seedDatabase } = require('./prisma/seedAll');
+
+app.get('/test-seed', async (req, res) => {
+    try {
+        const { secret } = req.query;
+        if (secret !== 'my_temporary_secret') {
+            return res.status(403).json({ error: "Forbidden" });
+        }
+
+        await seedDatabase();
+        res.json({ message: "Database seeded successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Register new user 
 app.post('/users', jwtMiddleware, async (req, res) => {
     try {
