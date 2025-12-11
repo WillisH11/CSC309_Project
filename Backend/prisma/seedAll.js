@@ -80,6 +80,21 @@ async function main() {
         });
         console.log('✓ Manager user created');
 
+        const superPassword = await bcrypt.hash('Super123!', 10);
+        const superUser = await prisma.user.create({
+            data: {
+                utorid: 'superuser',
+                name: 'Super Admin',
+                email: 'super@mail.utoronto.ca',
+                password: superPassword,
+                role: 'superuser',
+                birthday: '1990-01-01',
+                points: 9999,
+                verified: true
+            }
+        });
+        console.log('✓ Superuser created');
+
         // Create a few more regular users for realistic data
         const user2Password = await bcrypt.hash('User123!', 10);
         const user2 = await prisma.user.create({
@@ -561,7 +576,8 @@ async function main() {
         console.log('🔐 Demo Credentials:');
         console.log('  Regular User: regularuser / Regular123!');
         console.log('  Cashier:      cashieruser / Cashier123!');
-        console.log('  Manager:      manageruser / Manager123!\n');
+        console.log('  Manager:      manageruser / Manager123!');
+        console.log('  Superuser:    superuser / Super123!\n');
 
         console.log('📈 Charts Will Display:');
         console.log('  ✓ Points Timeline (user dashboard)');
