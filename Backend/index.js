@@ -39,6 +39,9 @@ try {
 const app = express();
 const prisma = new PrismaClient();
 
+// Enable trust proxy for Railway (allows secure cookies behind proxy)
+app.set('trust proxy', 1);
+
 // Check for JWT_SECRET
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -57,8 +60,8 @@ function attachCsrfToken(req, res, next) {
         csrfToken = generateCsrfToken();
         res.cookie('csrfToken', csrfToken, {
             httpOnly: false,
-            sameSite: 'lax',
-            secure: isProd,
+            sameSite: isProd ? 'none' : 'lax', // Must be 'none' for cross-site (frontend/backend on different domains)
+            secure: isProd, // Must be true if sameSite is 'none'
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
     }
@@ -180,7 +183,7 @@ app.post('/auth/tokens', async (req, res) => {
         // Set httpOnly cookie for JWT
         res.cookie('jwt_token', token, {
             httpOnly: true,
-            sameSite: 'lax',
+            sameSite: isProd ? 'none' : 'lax',
             secure: isProd,
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
