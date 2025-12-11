@@ -54,6 +54,15 @@ const isProd = process.env.NODE_ENV === 'production';
 // CSRF helpers (double-submit cookie)
 const generateCsrfToken = () => uuidv4();
 
+function populateAuthFromCookie(req, res, next) {
+    if (!req.headers.authorization && req.cookies.jwt_token) {
+        req.headers.authorization = `Bearer ${req.cookies.jwt_token}`;
+        req.authFromCookie = true;
+    }
+    next();
+}
+
+
 function attachCsrfToken(req, res, next) {
     let csrfToken = req.cookies.csrfToken;
     if (!csrfToken) {
@@ -83,17 +92,20 @@ function verifyCsrf(req, res, next) {
     const safe = ['GET', 'HEAD', 'OPTIONS'];
     if (safe.includes(req.method)) return next();
     if (req.path.startsWith('/auth/')) return next(); // skip auth endpoints
+
+    // If authentication is provided via Header (and NOT populated from cookie),
+    // then the request is driven by JS (e.g. invalid if not same-origin/CORS allowed).
+    // Browser does not auto-send Authorization header, so CSRF is not possible.
+    if (req.headers.authorization && !req.authFromCookie) {
+        return next();
+    }
+
     const cookieToken = req.cookies.csrfToken;
     const headerToken = req.headers['x-csrf-token'];
+
+    // If relying on Cookie Auth (or mixed), we need CSRF check.
     if (!cookieToken || !headerToken || cookieToken !== headerToken) {
         return res.status(403).json({ error: "Forbidden (CSRF token mismatch)" });
-    }
-    next();
-}
-
-function populateAuthFromCookie(req, res, next) {
-    if (!req.headers.authorization && req.cookies.jwt_token) {
-        req.headers.authorization = `Bearer ${req.cookies.jwt_token}`;
     }
     next();
 }
