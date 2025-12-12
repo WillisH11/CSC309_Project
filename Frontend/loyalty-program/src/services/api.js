@@ -51,7 +51,8 @@ class ApiService {
       const response = await fetch(url, config);
 
       // 401 Unauthorized (token expired or invalid)
-      if (response.status === 401) {
+      // Don't redirect if this is the login endpoint itself
+      if (response.status === 401 && endpoint !== "/auth/tokens") {
         this.removeToken();
         window.location.href = "/login";
         throw new Error("Session expired. Please login again.");

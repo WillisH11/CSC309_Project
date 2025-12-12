@@ -75,3 +75,21 @@
     color: var(--color-brand-red);
     text-decoration: underline;
 }
+
+.error-msg {
+    background-color: #fee;
+    color: #c33;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    text-align: left;
+    border-left: 4px solid #c33;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.error-msg i {
+    flex-shrink: 0;
+}
