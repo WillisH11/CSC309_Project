@@ -3,7 +3,7 @@ import api from "../../services/api";
 import { useAuth } from "../../Contexts/AuthContext";
 import "./UserPromotions.css";
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 8;
 
 export default function UserPromotions() {
   const { activeRole } = useAuth();
