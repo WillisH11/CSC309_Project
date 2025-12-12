@@ -2179,7 +2179,7 @@ app.post('/events', jwtMiddleware, async (req, res) => {
             return res.status(403).json({ error: "Forbidden" });
         }
 
-        const { name, description, location, startTime, endTime, capacity, points, organizers } = req.body;
+        const { name, description, location, startTime, endTime, capacity, points, organizers, published } = req.body;
 
         // Validate required fields
         if (!name || !description || !location || !startTime || !endTime || !points) {
@@ -2232,7 +2232,7 @@ app.post('/events', jwtMiddleware, async (req, res) => {
                     capacity: eventCapacity,
                     points: totalPoints,
                     pointsRemain: totalPoints,
-                    published: false
+                    published: published === true // Default to false if not provided
                 }
             });
 

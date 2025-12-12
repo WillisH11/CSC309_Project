@@ -139,7 +139,52 @@ async function main() {
                 verified: true
             }
         });
-        console.log('✓ Additional user 3 created\n');
+        console.log('✓ Additional user 3 created');
+
+        const user5Password = await bcrypt.hash('User123!', 10);
+        const user5 = await prisma.user.create({
+            data: {
+                utorid: 'davidlee',
+                name: 'David Lee',
+                email: 'david.lee@mail.utoronto.ca',
+                password: user5Password,
+                role: 'regular',
+                birthday: '2000-09-12',
+                points: 320,
+                verified: true
+            }
+        });
+        console.log('✓ Additional user 4 created');
+
+        const user6Password = await bcrypt.hash('User123!', 10);
+        const user6 = await prisma.user.create({
+            data: {
+                utorid: 'sophiatan',
+                name: 'Sophia Tan',
+                email: 'sophia.tan@mail.utoronto.ca',
+                password: user6Password,
+                role: 'regular',
+                birthday: '2001-12-03',
+                points: 150,
+                verified: true
+            }
+        });
+        console.log('✓ Additional user 5 created');
+
+        const user7Password = await bcrypt.hash('User123!', 10);
+        const user7 = await prisma.user.create({
+            data: {
+                utorid: 'michaelkim',
+                name: 'Michael Kim',
+                email: 'michael.kim@mail.utoronto.ca',
+                password: user7Password,
+                role: 'regular',
+                birthday: '1999-04-25',
+                points: 540,
+                verified: true
+            }
+        });
+        console.log('✓ Additional user 6 created\n');
 
         // ======================
         // 2. CREATE PROMOTIONS
@@ -170,7 +215,137 @@ async function main() {
                 points: 50,
             }
         });
-        console.log('✓ One-time promotion created\n');
+        console.log('✓ One-time promotion created');
+
+        const promo3 = await prisma.promotion.create({
+            data: {
+                name: 'Weekend Special',
+                description: 'Double points on weekend purchases! Valid Saturdays and Sundays.',
+                type: 'automatic',
+                startTime: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+                endTime: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000),
+                minSpending: 5.0,
+                rate: 2.0,
+            }
+        });
+        console.log('✓ Weekend promotion created');
+
+        const promo4 = await prisma.promotion.create({
+            data: {
+                name: 'Big Spender Reward',
+                description: 'Spend $100 or more and get 100 bonus points!',
+                type: 'onetime',
+                startTime: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
+                endTime: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
+                minSpending: 100.0,
+                points: 100,
+            }
+        });
+        console.log('✓ Big spender promotion created');
+
+        const promo5 = await prisma.promotion.create({
+            data: {
+                name: 'New Year Triple Points',
+                description: 'Start the year right with 3x points on all purchases!',
+                type: 'automatic',
+                startTime: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+                endTime: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+                minSpending: 1.0,
+                rate: 3.0,
+            }
+        });
+        console.log('✓ New Year promotion created');
+
+        const promo6 = await prisma.promotion.create({
+            data: {
+                name: 'Spring Break Special',
+                description: 'Enjoy 2x points on all purchases during spring break week!',
+                type: 'automatic',
+                startTime: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                endTime: new Date(Date.now() + 40 * 24 * 60 * 60 * 1000),
+                minSpending: 5.0,
+                rate: 2.0,
+            }
+        });
+        console.log('✓ Spring Break promotion created');
+
+        const promo7 = await prisma.promotion.create({
+            data: {
+                name: 'Birthday Month Bonus',
+                description: 'Celebrate your birthday with 100 bonus points on any purchase!',
+                type: 'onetime',
+                startTime: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
+                endTime: new Date(Date.now() + 120 * 24 * 60 * 60 * 1000),
+                minSpending: 10.0,
+                points: 100,
+            }
+        });
+        console.log('✓ Birthday Month promotion created');
+
+        const promo8 = await prisma.promotion.create({
+            data: {
+                name: 'Early Bird Special',
+                description: 'Shop before 10 AM and get 1.5x points!',
+                type: 'automatic',
+                startTime: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000),
+                endTime: new Date(Date.now() + 50 * 24 * 60 * 60 * 1000),
+                minSpending: 3.0,
+                rate: 1.5,
+            }
+        });
+        console.log('✓ Early Bird promotion created');
+
+        const promo9 = await prisma.promotion.create({
+            data: {
+                name: 'Exam Week Support',
+                description: 'Get 75 bonus points on purchases over $20 during exam week',
+                type: 'onetime',
+                startTime: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+                endTime: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000),
+                minSpending: 20.0,
+                points: 75,
+            }
+        });
+        console.log('✓ Exam Week promotion created');
+
+        const promo10 = await prisma.promotion.create({
+            data: {
+                name: 'Summer Kickoff',
+                description: 'Welcome summer with quadruple points on all purchases!',
+                type: 'automatic',
+                startTime: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+                endTime: new Date(Date.now() + 75 * 24 * 60 * 60 * 1000),
+                minSpending: 5.0,
+                rate: 4.0,
+            }
+        });
+        console.log('✓ Summer Kickoff promotion created');
+
+        const promo11 = await prisma.promotion.create({
+            data: {
+                name: 'Loyalty Reward',
+                description: 'Spend $50 and get 150 bonus points - thank you for your loyalty!',
+                type: 'onetime',
+                startTime: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000),
+                endTime: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+                minSpending: 50.0,
+                points: 150,
+            }
+        });
+        console.log('✓ Loyalty Reward promotion created');
+
+        const promo12 = await prisma.promotion.create({
+            data: {
+                name: 'Flash Sale Friday',
+                description: 'Every Friday get 2.5x points on all purchases!',
+                type: 'automatic',
+                startTime: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+                endTime: new Date(Date.now() + 35 * 24 * 60 * 60 * 1000),
+                minSpending: 1.0,
+                rate: 2.5,
+            }
+        });
+        console.log('✓ Flash Sale Friday promotion created\n');
 
         // ======================
         // 3. CREATE TRANSACTIONS
@@ -285,7 +460,256 @@ async function main() {
             }
         });
 
-        console.log('✓ Created transactions for other users\n');
+        console.log('✓ Created transactions for other users');
+
+        // Additional transactions to reach 30+ total with all types
+
+        // More purchases (to have variety)
+        await prisma.transaction.create({
+            data: {
+                type: 'purchase',
+                userId: user5.id,
+                amount: 160,
+                spent: 40.0,
+                createdById: cashierUser.id,
+                createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        await prisma.transaction.create({
+            data: {
+                type: 'purchase',
+                userId: user6.id,
+                amount: 80,
+                spent: 20.0,
+                createdById: cashierUser.id,
+                createdAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        await prisma.transaction.create({
+            data: {
+                type: 'purchase',
+                userId: user7.id,
+                amount: 240,
+                spent: 60.0,
+                createdById: cashierUser.id,
+                createdAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        // Redemption transactions (at least 2)
+        await prisma.transaction.create({
+            data: {
+                type: 'redemption',
+                userId: regularUser.id,
+                amount: -50,
+                redeemed: 50,
+                remark: 'Redeemed for coffee mug',
+                createdById: cashierUser.id,
+                createdAt: new Date(Date.now() - 11 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        await prisma.transaction.create({
+            data: {
+                type: 'redemption',
+                userId: user3.id,
+                amount: -120,
+                redeemed: 120,
+                remark: 'Redeemed for CSSU hoodie',
+                createdById: cashierUser.id,
+                createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        await prisma.transaction.create({
+            data: {
+                type: 'redemption',
+                userId: user7.id,
+                amount: -200,
+                redeemed: 200,
+                remark: 'Redeemed for textbook voucher',
+                createdById: cashierUser.id,
+                createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        // Adjustment transactions (at least 2)
+        await prisma.transaction.create({
+            data: {
+                type: 'adjustment',
+                userId: user2.id,
+                amount: 100,
+                remark: 'Bonus points for volunteer work',
+                createdById: managerUser.id,
+                createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        await prisma.transaction.create({
+            data: {
+                type: 'adjustment',
+                userId: user5.id,
+                amount: -50,
+                remark: 'Correction for duplicate transaction',
+                createdById: managerUser.id,
+                createdAt: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        await prisma.transaction.create({
+            data: {
+                type: 'adjustment',
+                userId: user6.id,
+                amount: 75,
+                remark: 'Referral bonus',
+                createdById: managerUser.id,
+                createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        // More transfer transactions
+        await prisma.transaction.create({
+            data: {
+                type: 'transfer',
+                userId: user3.id,
+                amount: -30,
+                relatedId: user4.id,
+                remark: 'Splitting lunch cost',
+                createdById: user3.id,
+                createdAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        await prisma.transaction.create({
+            data: {
+                type: 'transfer',
+                userId: user4.id,
+                amount: 30,
+                relatedId: user3.id,
+                remark: 'Received from transfer',
+                createdById: user3.id,
+                createdAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        await prisma.transaction.create({
+            data: {
+                type: 'transfer',
+                userId: user7.id,
+                amount: -100,
+                relatedId: user5.id,
+                remark: 'Gift points',
+                createdById: user7.id,
+                createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        await prisma.transaction.create({
+            data: {
+                type: 'transfer',
+                userId: user5.id,
+                amount: 100,
+                relatedId: user7.id,
+                remark: 'Received from transfer',
+                createdById: user7.id,
+                createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        // More event transactions
+        await prisma.transaction.create({
+            data: {
+                type: 'event',
+                userId: user4.id,
+                amount: 75,
+                remark: 'Attended Python Workshop',
+                createdById: managerUser.id,
+                createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        await prisma.transaction.create({
+            data: {
+                type: 'event',
+                userId: user6.id,
+                amount: 50,
+                remark: 'Attended Web Dev Workshop',
+                createdById: managerUser.id,
+                createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        // Additional diverse transactions for pagination
+        await prisma.transaction.create({
+            data: {
+                type: 'purchase',
+                userId: regularUser.id,
+                amount: 40,
+                spent: 10.0,
+                createdById: cashierUser.id,
+                createdAt: new Date(Date.now() - 16 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        await prisma.transaction.create({
+            data: {
+                type: 'purchase',
+                userId: user2.id,
+                amount: 200,
+                spent: 50.0,
+                createdById: cashierUser.id,
+                createdAt: new Date(Date.now() - 17 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        await prisma.transaction.create({
+            data: {
+                type: 'purchase',
+                userId: user5.id,
+                amount: 120,
+                spent: 30.0,
+                createdById: cashierUser.id,
+                createdAt: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        await prisma.transaction.create({
+            data: {
+                type: 'purchase',
+                userId: user6.id,
+                amount: 60,
+                spent: 15.0,
+                createdById: cashierUser.id,
+                createdAt: new Date(Date.now() - 19 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        await prisma.transaction.create({
+            data: {
+                type: 'redemption',
+                userId: user5.id,
+                amount: -100,
+                redeemed: 100,
+                remark: 'Redeemed for lunch voucher',
+                createdById: cashierUser.id,
+                createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        await prisma.transaction.create({
+            data: {
+                type: 'event',
+                userId: user2.id,
+                amount: 100,
+                remark: 'Attended Fall BBQ Social',
+                createdById: managerUser.id,
+                createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+            }
+        });
+
+        console.log('✓ Created 30+ transactions with all types (purchase, redemption, adjustment, event, transfer)\n');
 
         // ======================
         // 4. CREATE EVENTS
@@ -567,11 +991,11 @@ async function main() {
         console.log('========================================\n');
 
         console.log('📊 Summary:');
-        console.log('  Users:        6 (1 Regular, 1 Cashier, 1 Manager, 3 Additional Regular)');
-        console.log('  Transactions: 9 (for chart data)');
+        console.log('  Users:        10 (1 Superuser, 1 Manager, 1 Cashier, 7 Regular)');
+        console.log('  Transactions: 30+ (purchase, redemption, adjustment, event, transfer)');
         console.log('  Events:       8 (7 published, 1 draft)');
         console.log('  Event Guests: ~25 RSVPs across events');
-        console.log('  Promotions:   2 (1 automatic, 1 one-time)\n');
+        console.log('  Promotions:   12 (8 automatic, 4 one-time)\n');
 
         console.log('🔐 Demo Credentials:');
         console.log('  Regular User: regularuser / Regular123!');

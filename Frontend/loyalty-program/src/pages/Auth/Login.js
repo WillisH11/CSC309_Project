@@ -24,9 +24,36 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Clear previous errors
+    setError("");
+
+    // Frontend validation
+    if (!username.trim()) {
+      setError("Please enter your UTORid.");
+      return;
+    }
+
+    if (!password) {
+      setError("Please enter your password.");
+      return;
+    }
+
+    // Attempt login
     const result = await login(username, password);
     if (!result.success) {
-      setError(result.message);
+      // Map backend errors to user-friendly messages
+      const errorMessage = result.message;
+
+      if (errorMessage.includes("Invalid credentials")) {
+        setError("Invalid UTORid or password. Please try again.");
+      } else if (errorMessage.includes("Missing required fields")) {
+        setError("Please enter both UTORid and password.");
+      } else if (errorMessage.includes("Session expired")) {
+        setError("Your session has expired. Please login again.");
+      } else {
+        setError(errorMessage || "Login failed. Please try again.");
+      }
       return;
     }
     navigate("/dashboard");

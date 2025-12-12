@@ -108,6 +108,13 @@ export default function Profile() {
       return;
     }
 
+    // Validate new password is different from old password
+    if (passwordData.old === passwordData.new) {
+      setPasswordError("New password must be different from current password");
+      setPasswordLoading(false);
+      return;
+    }
+
     // Validate password format
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,20}$/;
     if (!passwordRegex.test(passwordData.new)) {
