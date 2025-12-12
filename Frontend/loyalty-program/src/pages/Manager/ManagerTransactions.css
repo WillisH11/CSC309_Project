@@ -149,7 +149,7 @@
 /* Type colors - More distinct and vibrant */
 .manager-tx-card.type-purchase {
   border-color: #4cc9f0;
-  background: linear-gradient(to right, #ffffff 0%, #f0f9ff 100%);
+  background: #ffffff;
 }
 
 .manager-tx-card.type-purchase::before {
@@ -158,7 +158,7 @@
 
 .manager-tx-card.type-transfer {
   border-color: #f72585;
-  background: linear-gradient(to right, #ffffff 0%, #fff0f8 100%);
+  background: #ffffff;
 }
 
 .manager-tx-card.type-transfer::before {
@@ -167,7 +167,7 @@
 
 .manager-tx-card.type-redemption {
   border-color: #ffba08;
-  background: linear-gradient(to right, #ffffff 0%, #fffbf0 100%);
+  background: #ffffff;
 }
 
 .manager-tx-card.type-redemption::before {
@@ -176,7 +176,7 @@
 
 .manager-tx-card.type-adjustment {
   border-color: #7209b7;
-  background: linear-gradient(to right, #ffffff 0%, #f5f0ff 100%);
+  background: #ffffff;
 }
 
 .manager-tx-card.type-adjustment::before {
@@ -185,7 +185,7 @@
 
 .manager-tx-card.type-event {
   border-color: #06d6a0;
-  background: linear-gradient(to right, #ffffff 0%, #f0fdfa 100%);
+  background: #ffffff;
 }
 
 .manager-tx-card.type-event::before {
