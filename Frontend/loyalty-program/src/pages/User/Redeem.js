@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../Contexts/AuthContext";
+import api from "../../services/api";
 import "./Redeem.css";
 
 export default function Redeem() {
   const navigate = useNavigate();
-  const { token, user, refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [points, setPoints] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,22 +28,10 @@ export default function Redeem() {
     try {
       setLoading(true);
 
-      const res = await fetch("http://localhost:3002/users/me/transactions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ amount: Number(points), remark : "User redemption request" })
+      const data = await api.post("/users/me/transactions", {
+        amount: Number(points),
+        remark: "User redemption request"
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Redemption failed.");
-        setLoading(false);
-        return;
-      }
 
       // Refresh user data to update points before redirecting
       await refreshUser();
@@ -52,7 +41,8 @@ export default function Redeem() {
 
     } catch (err) {
       console.error(err);
-      setError("Something went wrong. Try again.");
+      const errorMessage = err.message || err.error || "Something went wrong. Try again.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

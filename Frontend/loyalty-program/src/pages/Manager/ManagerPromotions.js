@@ -212,7 +212,8 @@ export default function ManagerPromotions() {
       loadPromotions();
     } catch (err) {
       console.error(err);
-      showMessage("Error", err.error || "Failed to create promotion.", "error");
+      const errorMessage = err.message || err.error || "Failed to create promotion.";
+      showMessage("Error", errorMessage, "error");
     }
   }
 
@@ -275,7 +276,8 @@ export default function ManagerPromotions() {
       loadPromotions();
     } catch (err) {
       console.error(err);
-      alert(err.error || "Failed to update promotion.");
+      const errorMessage = err.message || err.error || "Failed to update promotion.";
+      showMessage("Error", errorMessage, "error");
     }
   }
 
@@ -284,9 +286,11 @@ export default function ManagerPromotions() {
     if (!window.confirm("Delete this promotion?")) return;
     try {
       await api.delete(`/promotions/${id}`);
+      showMessage("Success", "Promotion deleted successfully!", "success");
       loadPromotions();
     } catch (err) {
-      alert(err.error || "Failed to delete promotion.");
+      console.error(err);
+      showMessage("Error", err.error || "Failed to delete promotion.", "error");
     }
   }
 

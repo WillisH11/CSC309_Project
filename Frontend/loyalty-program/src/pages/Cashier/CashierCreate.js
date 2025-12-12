@@ -160,7 +160,7 @@ export default function CashierCreate() {
         promotionIds: promoIds
       });
 
-      setSuccess(`Created! Earned ${res.earned} points.`);
+      setSuccess(`Created! Your Purchase Earned ${res.earned} points.`);
 
       // Reload promotions to reflect that customer has used the one-time promotion
       await loadPromotions();

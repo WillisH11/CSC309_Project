@@ -22,21 +22,40 @@ class ApiService {
     localStorage.removeItem("token");
   }
 
+  // Get CSRF token from cookies
+  getCsrfToken() {
+    const name = "csrfToken=";
+    const decodedCookie = decodeURIComponent(document.cookie);
+    const ca = decodedCookie.split(';');
+    for(let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) === ' ') {
+        c = c.substring(1);
+      }
+      if (c.indexOf(name) === 0) {
+        return c.substring(name.length, c.length);
+      }
+    }
+    return null;
+  }
+
   // Generic request method
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
     const token = this.getToken();
 
-    // For cross-site requests (Frontend/Backend on different subdomains),
-    // we must read the CSRF token from storage (set by Login), as we can't read the HTTP-only cookie
-    // or the SameSite cookie across domains via document.cookie.
-    const csrfToken = localStorage.getItem("csrfToken");
+    // Get CSRF token from cookies (preferred) or localStorage (fallback)
+    const csrfToken = this.getCsrfToken() || localStorage.getItem("csrfToken");
+    
+    // Only send CSRF token for non-GET requests and non-auth endpoints
+    const isAuthEndpoint = endpoint.startsWith('/auth/');
+    const isStateChanging = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method || 'GET');
 
     const config = {
       ...options,
       headers: {
         "Content-Type": "application/json",
-        ...(csrfToken ? { "x-csrf-token": csrfToken } : {}),
+        ...(csrfToken && !isAuthEndpoint && isStateChanging ? { "x-csrf-token": csrfToken } : {}),
         ...options.headers,
       },
       credentials: "include",
@@ -51,8 +70,8 @@ class ApiService {
       const response = await fetch(url, config);
 
       // 401 Unauthorized (token expired or invalid)
-      // Don't redirect if this is the login endpoint itself
-      if (response.status === 401 && endpoint !== "/auth/tokens") {
+      // Don't redirect for auth endpoints (login, activate, password reset)
+      if (response.status === 401 && !isAuthEndpoint) {
         this.removeToken();
         window.location.href = "/login";
         throw new Error("Session expired. Please login again.");
@@ -68,15 +87,29 @@ class ApiService {
 
       // Parse JSON response
       const text = await response.text();
-      const data = text ? JSON.parse(text) : null;
+      let data = null;
+      
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch (parseError) {
+          // If JSON parsing fails, throw a more descriptive error
+          throw new Error(`Invalid response from server: ${text.substring(0, 100)}`);
+        }
+      }
 
       if (!response.ok) {
-        throw new Error(data?.error || data?.message || "Request failed");
+        throw new Error(data?.error || data?.message || `Request failed with status ${response.status}`);
       }
 
       return data;
     } catch (error) {
-      throw error;
+      // If it's already an Error object, throw it as is
+      if (error instanceof Error) {
+        throw error;
+      }
+      // Otherwise, wrap it in an Error
+      throw new Error(error.message || "Request failed");
     }
   }
 
@@ -124,28 +157,65 @@ class ApiService {
   async postWithFile(endpoint, formData) {
     const url = `${this.baseURL}${endpoint}`;
     const token = this.getToken();
+    const csrfToken = this.getCsrfToken() || localStorage.getItem("csrfToken");
+    const isAuthEndpoint = endpoint.startsWith('/auth/');
 
     const config = {
       method: "POST",
       body: formData,
       headers: {},
+      credentials: "include",
     };
 
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
 
+    // Add CSRF token for non-auth endpoints
+    if (csrfToken && !isAuthEndpoint) {
+      config.headers["x-csrf-token"] = csrfToken;
+    }
+
     try {
       const response = await fetch(url, config);
-      const data = await response.json();
+
+      // 401 Unauthorized (token expired or invalid)
+      if (response.status === 401 && !isAuthEndpoint) {
+        this.removeToken();
+        window.location.href = "/login";
+        throw new Error("Session expired. Please login again.");
+      }
+
+      // Handle empty responses
+      if (response.status === 204 || response.headers.get("content-length") === "0") {
+        if (!response.ok) {
+          throw new Error("Upload failed");
+        }
+        return null;
+      }
+
+      // Parse JSON response
+      const text = await response.text();
+      let data = null;
+      
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch (parseError) {
+          throw new Error(`Invalid response from server: ${text.substring(0, 100)}`);
+        }
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || "Upload failed");
+        throw new Error(data?.error || data?.message || "Upload failed");
       }
 
       return data;
     } catch (error) {
-      throw error;
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error(error.message || "Upload failed");
     }
   }
 
@@ -153,28 +223,65 @@ class ApiService {
   async patchWithFile(endpoint, formData) {
     const url = `${this.baseURL}${endpoint}`;
     const token = this.getToken();
+    const csrfToken = this.getCsrfToken() || localStorage.getItem("csrfToken");
+    const isAuthEndpoint = endpoint.startsWith('/auth/');
 
     const config = {
       method: "PATCH",
       body: formData,
       headers: {},
+      credentials: "include",
     };
 
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
 
+    // Add CSRF token for non-auth endpoints
+    if (csrfToken && !isAuthEndpoint) {
+      config.headers["x-csrf-token"] = csrfToken;
+    }
+
     try {
       const response = await fetch(url, config);
-      const data = await response.json();
+
+      // 401 Unauthorized (token expired or invalid)
+      if (response.status === 401 && !isAuthEndpoint) {
+        this.removeToken();
+        window.location.href = "/login";
+        throw new Error("Session expired. Please login again.");
+      }
+
+      // Handle empty responses
+      if (response.status === 204 || response.headers.get("content-length") === "0") {
+        if (!response.ok) {
+          throw new Error("Upload failed");
+        }
+        return null;
+      }
+
+      // Parse JSON response
+      const text = await response.text();
+      let data = null;
+      
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch (parseError) {
+          throw new Error(`Invalid response from server: ${text.substring(0, 100)}`);
+        }
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || "Upload failed");
+        throw new Error(data?.error || data?.message || "Upload failed");
       }
 
       return data;
     } catch (error) {
-      throw error;
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error(error.message || "Upload failed");
     }
   }
 }

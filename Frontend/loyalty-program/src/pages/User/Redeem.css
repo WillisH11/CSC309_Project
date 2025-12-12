@@ -19,25 +19,42 @@
   padding: 10px;
   font-size: 1rem;
   border-radius: 8px;
-  border: 1px solid #ddd;
+  border: 2px solid var(--color-border);
+  transition: all 0.2s ease;
+}
+
+.redeem-form input:focus {
+  outline: none;
+  border-color: var(--color-brand-orange);
+  box-shadow: 0 0 0 3px rgba(255, 162, 57, 0.15);
 }
 
 .redeem-btn {
   padding: 12px;
-  background-color: #ff6b6b;
+  background: linear-gradient(135deg, var(--color-brand-orange) 0%, #ff9a3d 100%);
   color: white;
   font-size: 1.1rem;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: 0.25s;
+  transition: all 0.2s ease;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(255, 162, 57, 0.3);
 }
 
-.redeem-btn:hover {
-  background-color: #ff5252;
+.redeem-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--color-btn-hover) 0%, #ff8a2e 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 162, 57, 0.4);
+}
+
+.redeem-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .redeem-error {
-  color: #d9534f;
+  color: var(--color-brand-red);
   font-size: 0.95rem;
+  font-weight: 600;
 }
