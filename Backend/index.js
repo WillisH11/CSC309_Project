@@ -423,14 +423,13 @@ app.post('/auth/activate', async (req, res) => {
         // Hash new password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Update password, clear reset token, and mark as verified
+        // Update password and clear reset token 
         await prisma.user.update({
             where: { id: user.id },
             data: {
                 password: hashedPassword,
                 resetToken: null,
-                expiresAt: null,
-                verified: true
+                expiresAt: null
             }
         });
 
