@@ -86,7 +86,6 @@ export default function Transactions() {
             <option value="redemption">Redemption</option>
             <option value="transfer">Transfer</option>
             <option value="adjustment">Adjustment</option>
-            <option value="event">Event</option>
           </select>
         </div>
 
@@ -100,6 +99,7 @@ export default function Transactions() {
           >
             <option value="createdAt">Date</option>
             <option value="amount">Amount</option>
+            <option value="type">Type</option>
           </select>
         </div>
 
@@ -159,86 +159,73 @@ export default function Transactions() {
 /* CARD COMPONENT */
 function TxCard({ tx }) {
   const amount = computeAmount(tx);
+  const isPositive = amount > 0;
 
   return (
     <div className={`tx-card type-${tx.type}`}>
-      <div className="tx-header">
+      <div className="tx-card-header">
         <span className="tx-type">{tx.type.toUpperCase()}</span>
-        <span
-          className={`tx-amount ${
-            amount >= 0 ? "positive" : "negative"
-          }`}
-        >
-          {amount > 0 ? "+" : ""}
+
+        <span className={`tx-amount ${isPositive ? "positive" : "negative"}`}>
+          {isPositive ? "+" : ""}
           {amount}
         </span>
       </div>
 
-      {/* TRANSFER → show related user's name and utorid */}
-      {tx.type === "transfer" && tx.relatedUser && (
-        <>
-          <div className="tx-line">
-            {amount < 0 ? "Sent To:" : "Received From:"} <b>{tx.relatedUser.name} ({tx.relatedUser.utorid})</b>
-          </div>
-        </>
-      )}
-
-      {/* Other transaction types */}
-      {tx.type !== "transfer" && (
-        <>
-          <div className="tx-line">
-            Created by: <b>{tx.createdBy?.name || tx.createdBy?.utorid || "N/A"}</b>
-          </div>
-
-          {/* ADJUSTMENT → show "Transaction #XX" */}
-          {tx.type === "adjustment" && (
-            <div className="tx-line">
-              Adjusted For: <b>Transaction #{tx.relatedId}</b>
-            </div>
-          )}
-
-          {/* PURCHASE */}
-          {tx.type === "purchase" && (
-            <>
-              {tx.spent && (
-                <div className="tx-line">
-                  Spent: <b>${tx.spent.toFixed(2)}</b>
-                </div>
-              )}
-              {tx.promotionBonus && tx.promotionBonus > 0 && (
-                <div className="tx-line tx-promotion-bonus">
-                  <span>🎉 Promotion Bonus:</span>
-                  <b className="tx-bonus-amount">+{tx.promotionBonus} points</b>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* REDEMPTION */}
-          {tx.type === "redemption" && (
-            <div className="tx-line">
-              Redeemed: <b>{tx.redeemed} points</b>
-            </div>
-          )}
-
-          {/* EVENT */}
-          {tx.type === "event" && (
-            <div className="tx-line">
-              Points Awarded: <b className="tx-bonus-amount">+{tx.amount} points</b>
-            </div>
-          )}
-        </>
-      )}
-
-      {tx.remark && (
-        <div className="tx-line" style={{ fontStyle: "italic", color: "var(--color-text-muted)" }}>
-          {tx.remark}
+      <div className="tx-body">
+        <div className="tx-row">
+          <span>Created By:</span>
+          <span>{tx.createdBy?.name || tx.createdBy?.utorid || "N/A"}</span>
         </div>
-      )}
 
-      <div className="tx-date">
-        {new Date(tx.createdAt).toLocaleString()}
+        {/* ADJUSTMENT → show "Transaction #XX" */}
+        {tx.type === "adjustment" && (
+          <div className="tx-row">
+            <span>Adjusted For:</span>
+            <span>Transaction #{tx.relatedId}</span>
+          </div>
+        )}
+
+        {/* TRANSFER → show related user's name and utorid */}
+        {tx.type === "transfer" && tx.relatedUser && (
+          <div className="tx-row">
+            <span>{amount < 0 ? "Sent To:" : "Received From:"}</span>
+            <span>
+              {tx.relatedUser.name} ({tx.relatedUser.utorid})
+            </span>
+          </div>
+        )}
+
+        {/* PURCHASE */}
+        {tx.type === "purchase" && (
+          <>
+            <div className="tx-row">
+              <span>Spent:</span>
+              <span>${tx.spent?.toFixed(2)}</span>
+            </div>
+            {tx.promotionBonus && tx.promotionBonus > 0 && (
+              <div className="tx-row tx-promotion-bonus">
+                <span>🎉 Promotion Bonus:</span>
+                <span className="tx-bonus-amount">+{tx.promotionBonus} points</span>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* REDEMPTION */}
+        {tx.type === "redemption" && (
+          <div className="tx-row">
+            <span>Redeemed:</span>
+            <span>{tx.redeemed} points</span>
+          </div>
+        )}
+
+        {tx.remark && <p className="tx-remark">{tx.remark}</p>}
       </div>
+
+      <span className="tx-date">
+        {new Date(tx.createdAt).toLocaleString()}
+      </span>
     </div>
   );
 }
@@ -256,9 +243,6 @@ function computeAmount(tx) {
       return -tx.redeemed;
 
     case "adjustment":
-      return tx.amount;
-
-    case "event":
       return tx.amount;
 
     default:
