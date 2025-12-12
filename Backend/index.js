@@ -3420,10 +3420,12 @@ app.post('/promotions', jwtMiddleware, async (req, res) => {
             return res.status(400).json({ error: "Invalid date format" });
         }
 
-        // Allow start time to be equal to now or up to 5 seconds in the past to account for timing differences
+        // Allow start time to be equal to now or up to 2 minutes in the past to account for timing differences
+        // This accounts for datetime-local inputs that don't include seconds/milliseconds
+        // and potential timezone/clock synchronization issues
         const now = new Date();
-        const fiveSecondsAgo = new Date(now.getTime() - 5000);
-        if (start < fiveSecondsAgo) {
+        const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
+        if (start < twoMinutesAgo) {
             return res.status(400).json({ error: "Start time cannot be in the past" });
         }
 
