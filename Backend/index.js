@@ -184,6 +184,11 @@ app.post('/auth/tokens', async (req, res) => {
             return res.status(401).json({ error: "Invalid credentials" });
         }
 
+        // Check if account is activated (has a password set)
+        if (!user.password || user.password.trim() === '') {
+            return res.status(401).json({ error: "Account not activated. Please activate your account first using the activation token provided during registration." });
+        }
+
         // Compare password
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) {
@@ -258,6 +263,13 @@ app.post('/auth/resets', async (req, res) => {
             return res.status(404).json({ error: "User not found" });
         }
 
+        // Check if account is activated (has a password set)
+        // An unactivated account has an empty password string or null
+        const isActivated = user.password && user.password.trim() !== '';
+        if (!isActivated) {
+            return res.status(403).json({ error: "Account not activated. Please activate your account first using the activation token provided during registration." });
+        }
+
         // Generate reset token (expires in 1 hour)
         const resetToken = uuidv4();
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
@@ -312,6 +324,11 @@ app.post('/auth/resets/:resetToken', async (req, res) => {
             return res.status(404).json({ error: "Invalid reset token" });
         }
 
+        // Check if account is activated (has a password set)
+        if (!user.password || user.password.trim() === '') {
+            return res.status(403).json({ error: "Account not activated. Please activate your account first using the activation token provided during registration." });
+        }
+
         // Check if utorid matches
         if (user.utorid !== utorid) {
             return res.status(401).json({ error: "Unauthorized" });
@@ -336,6 +353,88 @@ app.post('/auth/resets/:resetToken', async (req, res) => {
         });
 
         res.status(200).json({ message: "Password reset successful" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// Activate account with token
+app.post('/auth/activate', async (req, res) => {
+    try {
+        const { activationToken, utorid, password } = req.body;
+
+        if (!activationToken || !utorid || !password) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        // Validate password format (8-20 chars, 1 uppercase, lowercase, number, special char)
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,20}$/;
+        if (!passwordRegex.test(password)) {
+            return res.status(400).json({ error: "Invalid password format" });
+        }
+
+        // Find user by activation token (resetToken)
+        let user = await prisma.user.findFirst({
+            where: {
+                resetToken: activationToken,
+                NOT: {
+                    resetToken: null
+                }
+            }
+        });
+
+        // If token not found, check if account is already activated by UTORid
+        if (!user && utorid) {
+            const userByUtorid = await prisma.user.findUnique({
+                where: { utorid }
+            });
+            
+            if (userByUtorid) {
+                // Check if account is already activated
+                if (userByUtorid.password && userByUtorid.password.trim() !== '') {
+                    return res.status(400).json({ error: "This account has already been activated. Please log in instead." });
+                }
+                // Account exists but token is invalid/expired/used
+                return res.status(404).json({ error: "Invalid or expired activation token. This token may have already been used. Please contact support for a new activation token." });
+            }
+        }
+
+        if (!user) {
+            return res.status(404).json({ error: "Invalid activation token" });
+        }
+
+        // Check if utorid matches
+        if (user.utorid !== utorid) {
+            return res.status(400).json({ error: "Incorrect UTORid. Please check your UTORid and try again." });
+        }
+
+        // Check if token expired
+        if (user.expiresAt && new Date() > new Date(user.expiresAt)) {
+            return res.status(410).json({ error: "Activation token expired" });
+        }
+
+        // Check if account is already activated (has a password)
+        if (user.password && user.password.trim() !== '') {
+            return res.status(400).json({ error: "This account has already been activated. Please log in instead." });
+        }
+
+        // Hash new password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Update password, clear reset token, and mark as verified
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password: hashedPassword,
+                resetToken: null,
+                expiresAt: null,
+                verified: true
+            }
+        });
+
+        res.status(200).json({ message: "Account activated successfully" });
 
     } catch (error) {
         console.error(error);
@@ -3321,7 +3420,10 @@ app.post('/promotions', jwtMiddleware, async (req, res) => {
             return res.status(400).json({ error: "Invalid date format" });
         }
 
-        if (start < new Date()) {
+        // Allow start time to be equal to now or up to 5 seconds in the past to account for timing differences
+        const now = new Date();
+        const fiveSecondsAgo = new Date(now.getTime() - 5000);
+        if (start < fiveSecondsAgo) {
             return res.status(400).json({ error: "Start time cannot be in the past" });
         }
 
@@ -3711,7 +3813,9 @@ app.patch('/promotions/:promotionId', jwtMiddleware, async (req, res) => {
             if (isNaN(start.getTime())) {
                 return res.status(400).json({ error: "Invalid start time" });
             }
-            if (start < now) {
+            // Allow start time to be equal to now or up to 5 seconds in the past to account for timing differences
+            const fiveSecondsAgo = new Date(now.getTime() - 5000);
+            if (start < fiveSecondsAgo) {
                 return res.status(400).json({ error: "Start time cannot be in the past" });
             }
             updateData.startTime = start;

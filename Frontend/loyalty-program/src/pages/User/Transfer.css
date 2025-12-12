@@ -13,21 +13,23 @@ h1 {
 }
 
 .transfer-error {
-  background: #ffe5e5;
-  color: #b00000;
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);
+  color: var(--color-brand-red);
   padding: 0.8rem;
   border-radius: 8px;
   margin-bottom: 1rem;
   text-align: center;
+  border: 2px solid var(--color-brand-red);
 }
 
 .transfer-success {
-  background: #e0ffe8;
-  color: #0f7b36;
+  background: linear-gradient(135deg, #f0fff4 0%, #dcfce7 100%);
+  color: var(--color-success);
   padding: 0.8rem;
   border-radius: 8px;
   margin-bottom: 1rem;
   text-align: center;
+  border: 2px solid var(--color-success);
 }
 
 .lookup-section label,
@@ -42,26 +44,36 @@ h1 {
   width: 100%;
   padding: 0.9rem;
   margin-top: 1rem;
-  background: #3b82f6;
+  background: linear-gradient(135deg, var(--color-brand-orange) 0%, #ff9a3d 100%);
   color: white;
   border: none;
   border-radius: 8px;
   font-weight: bold;
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(255, 162, 57, 0.3);
 }
 
 .lookup-button:hover,
 .send-button:hover {
-  background: #2563eb;
+  background: linear-gradient(135deg, var(--color-btn-hover) 0%, #ff8a2e 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 162, 57, 0.4);
 }
 
 input {
   width: 100%;
   padding: 0.7rem;
-  border: 1px solid #ddd;
+  border: 2px solid var(--color-border);
   border-radius: 8px;
   margin-top: 0.3rem;
+  transition: all 0.2s ease;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--color-brand-orange);
+  box-shadow: 0 0 0 3px rgba(255, 162, 57, 0.15);
 }
 
 .recipient-info {

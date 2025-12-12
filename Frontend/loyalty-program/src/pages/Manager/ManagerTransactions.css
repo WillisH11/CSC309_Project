@@ -65,22 +65,22 @@
 }
 
 .manager-tx-filter-select:hover {
-  border-color: #4cc9f0;
+  border-color: var(--color-brand-orange);
 }
 
 .manager-tx-filter-select:focus {
   outline: none;
-  border-color: #4cc9f0;
-  box-shadow: 0 0 0 3px rgba(76, 201, 240, 0.1);
+  border-color: var(--color-brand-orange);
+  box-shadow: 0 0 0 3px rgba(255, 162, 57, 0.15);
 }
 
 .manager-tx-order-toggle {
   padding: 0.7rem 1rem;
   border-radius: 8px;
-  border: 2px solid #4cc9f0;
+  border: 2px solid var(--color-brand-orange);
   font-size: 0.9rem;
   background: white;
-  color: #4cc9f0;
+  color: var(--color-brand-orange);
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -92,10 +92,10 @@
 }
 
 .manager-tx-order-toggle:hover {
-  background: #4cc9f0;
+  background: var(--color-brand-orange);
   color: white;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(76, 201, 240, 0.3);
+  box-shadow: 0 2px 8px rgba(255, 162, 57, 0.3);
 }
 
 .manager-tx-order-toggle:active {
@@ -312,9 +312,9 @@
 
 .manager-tx-pagination-btn {
   padding: 0.7rem 1.5rem;
-  border: 2px solid #4cc9f0;
+  border: 2px solid var(--color-brand-orange);
   background: white;
-  color: #4cc9f0;
+  color: var(--color-brand-orange);
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
@@ -323,10 +323,10 @@
 }
 
 .manager-tx-pagination-btn:hover:not(:disabled) {
-  background: #4cc9f0;
+  background: var(--color-brand-orange);
   color: white;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(76, 201, 240, 0.3);
+  box-shadow: 0 4px 12px rgba(255, 162, 57, 0.3);
 }
 
 .manager-tx-pagination-btn:disabled {
