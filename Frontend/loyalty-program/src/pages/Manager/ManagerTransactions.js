@@ -122,6 +122,7 @@ export default function ManagerTransactions() {
           >
             <option value="createdAt">Date</option>
             <option value="amount">Amount</option>
+            <option value="type">Type</option>
           </select>
         </div>
 
