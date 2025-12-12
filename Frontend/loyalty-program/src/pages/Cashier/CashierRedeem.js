@@ -8,7 +8,6 @@ export default function CashierRedeem() {
   const [loading, setLoading] = useState(true);
   const [transactionId, setTransactionId] = useState("");
   const [manualError, setManualError] = useState("");
-  const [manualSuccess, setManualSuccess] = useState("");
 
   // Modal State
   const [modalConfig, setModalConfig] = useState({
@@ -62,7 +61,6 @@ export default function CashierRedeem() {
   async function processByTransactionId(e) {
     e.preventDefault();
     setManualError("");
-    setManualSuccess("");
 
     if (!transactionId || !transactionId.trim()) {
       setManualError("Please enter a transaction ID.");
@@ -77,13 +75,15 @@ export default function CashierRedeem() {
 
     try {
       await api.patch(`/transactions/${id}/processed`);
-      setManualSuccess(`Transaction #${id} processed successfully!`);
       setTransactionId("");
       // Reload the list to refresh
       await loadRequests();
+      // Show success modal (same as approve button)
+      showMessage("Success", "Redemption approved successfully!", "success");
     } catch (err) {
+      console.error("Process error:", err);
       const errorMessage = err.message || err.error || "Failed to process redemption.";
-      setManualError(errorMessage);
+      showMessage("Error", errorMessage, "error");
     }
   }
 
@@ -113,7 +113,6 @@ export default function CashierRedeem() {
               onChange={(e) => {
                 setTransactionId(e.target.value);
                 setManualError("");
-                setManualSuccess("");
               }}
               placeholder="ID#"
               style={{ width: "100%", padding: "0.7rem", borderRadius: "8px", border: "2px solid var(--color-border)" }}
@@ -130,11 +129,6 @@ export default function CashierRedeem() {
         {manualError && (
           <div className="cashier-alert error" style={{ marginTop: "1rem" }}>
             {manualError}
-          </div>
-        )}
-        {manualSuccess && (
-          <div className="cashier-alert success" style={{ marginTop: "1rem" }}>
-            {manualSuccess}
           </div>
         )}
       </div>
