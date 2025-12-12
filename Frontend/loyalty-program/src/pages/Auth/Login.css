@@ -75,3 +75,32 @@
     color: var(--color-brand-red);
     text-decoration: underline;
 }
+
+.error-msg {
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe0e0 100%);
+    color: var(--color-brand-red);
+    padding: 0.8rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    text-align: center;
+    border: 2px solid var(--color-brand-red);
+    font-size: 0.9rem;
+}
+
+.success-msg {
+    background: linear-gradient(135deg, #f0fff4 0%, #dcfce7 100%);
+    color: var(--color-success);
+    padding: 0.8rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    text-align: center;
+    border: 2px solid var(--color-success);
+    font-size: 0.9rem;
+}
+
+.form-group small {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+}
