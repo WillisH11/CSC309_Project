@@ -195,12 +195,17 @@ export default function ManagerPromotions() {
     if (!validateForm()) return showMessage("Validation Error", "Please fix the errors in the form.", "error");
 
     try {
+      // Convert datetime-local to ISO string to handle timezone correctly
+      // datetime-local gives us local time without timezone, we need to convert it properly
+      const startTimeISO = startTime ? new Date(startTime).toISOString() : startTime;
+      const endTimeISO = endTime ? new Date(endTime).toISOString() : endTime;
+
       await api.post("/promotions", {
         name: newName.trim(),
         description: description.trim(),
         type: newType,
-        startTime,
-        endTime,
+        startTime: startTimeISO,
+        endTime: endTimeISO,
         rate: newType === "automatic" ? Number(rate) / 100 : undefined,
         points: newType === "one-time" ? Number(points) : undefined,
         minSpending: minSpending ? Number(minSpending) : null,
@@ -254,14 +259,19 @@ export default function ManagerPromotions() {
     let body;
 
     if (hasStarted) {
-      body = { endTime };
+      // Convert datetime-local to ISO string for timezone handling
+      const endTimeISO = endTime ? new Date(endTime).toISOString() : endTime;
+      body = { endTime: endTimeISO };
     } else {
+      // Convert datetime-local to ISO string for timezone handling
+      const startTimeISO = startTime ? new Date(startTime).toISOString() : startTime;
+      const endTimeISO = endTime ? new Date(endTime).toISOString() : endTime;
       body = {
         name: newName.trim(),
         description: description.trim(),
         type: newType,
-        startTime,
-        endTime,
+        startTime: startTimeISO,
+        endTime: endTimeISO,
         rate: newType === "automatic" ? Number(rate) / 100 : undefined,
         points: newType === "one-time" ? Number(points) : undefined,
         minSpending: minSpending ? Number(minSpending) : null,
