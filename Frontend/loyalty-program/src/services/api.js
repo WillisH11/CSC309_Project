@@ -157,28 +157,65 @@ class ApiService {
   async postWithFile(endpoint, formData) {
     const url = `${this.baseURL}${endpoint}`;
     const token = this.getToken();
+    const csrfToken = this.getCsrfToken() || localStorage.getItem("csrfToken");
+    const isAuthEndpoint = endpoint.startsWith('/auth/');
 
     const config = {
       method: "POST",
       body: formData,
       headers: {},
+      credentials: "include",
     };
 
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
 
+    // Add CSRF token for non-auth endpoints
+    if (csrfToken && !isAuthEndpoint) {
+      config.headers["x-csrf-token"] = csrfToken;
+    }
+
     try {
       const response = await fetch(url, config);
-      const data = await response.json();
+
+      // 401 Unauthorized (token expired or invalid)
+      if (response.status === 401 && !isAuthEndpoint) {
+        this.removeToken();
+        window.location.href = "/login";
+        throw new Error("Session expired. Please login again.");
+      }
+
+      // Handle empty responses
+      if (response.status === 204 || response.headers.get("content-length") === "0") {
+        if (!response.ok) {
+          throw new Error("Upload failed");
+        }
+        return null;
+      }
+
+      // Parse JSON response
+      const text = await response.text();
+      let data = null;
+      
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch (parseError) {
+          throw new Error(`Invalid response from server: ${text.substring(0, 100)}`);
+        }
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || "Upload failed");
+        throw new Error(data?.error || data?.message || "Upload failed");
       }
 
       return data;
     } catch (error) {
-      throw error;
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error(error.message || "Upload failed");
     }
   }
 
@@ -186,28 +223,65 @@ class ApiService {
   async patchWithFile(endpoint, formData) {
     const url = `${this.baseURL}${endpoint}`;
     const token = this.getToken();
+    const csrfToken = this.getCsrfToken() || localStorage.getItem("csrfToken");
+    const isAuthEndpoint = endpoint.startsWith('/auth/');
 
     const config = {
       method: "PATCH",
       body: formData,
       headers: {},
+      credentials: "include",
     };
 
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
 
+    // Add CSRF token for non-auth endpoints
+    if (csrfToken && !isAuthEndpoint) {
+      config.headers["x-csrf-token"] = csrfToken;
+    }
+
     try {
       const response = await fetch(url, config);
-      const data = await response.json();
+
+      // 401 Unauthorized (token expired or invalid)
+      if (response.status === 401 && !isAuthEndpoint) {
+        this.removeToken();
+        window.location.href = "/login";
+        throw new Error("Session expired. Please login again.");
+      }
+
+      // Handle empty responses
+      if (response.status === 204 || response.headers.get("content-length") === "0") {
+        if (!response.ok) {
+          throw new Error("Upload failed");
+        }
+        return null;
+      }
+
+      // Parse JSON response
+      const text = await response.text();
+      let data = null;
+      
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch (parseError) {
+          throw new Error(`Invalid response from server: ${text.substring(0, 100)}`);
+        }
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || "Upload failed");
+        throw new Error(data?.error || data?.message || "Upload failed");
       }
 
       return data;
     } catch (error) {
-      throw error;
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error(error.message || "Upload failed");
     }
   }
 }
